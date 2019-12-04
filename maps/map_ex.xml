@@ -1,0 +1,41 @@
+<map version="0.1.Lite">
+	<static-geometry>
+		<prop library='Ex_library' name='Some_name'>
+			<position>
+				<x>0</x>
+				<y>0</y>
+			</position>
+		</prop>
+	</static-geometry>
+	<collision-geometry>
+		<collision-rect>
+			<size>
+				<width>10</width>
+				<height>10</height>				
+			</size>
+			<position>
+				<x>0</x>
+				<y>0</y>
+			</position>
+		</collision-rect>
+	</collision-geometry>
+	<spawn-points>
+		<gg-spawn-point>
+			<position>
+				<x>0</x>
+				<y>0</y>
+			</position>
+			<rotation>0</rotation>
+		</gg-spawn-point>
+		<enemy-spawn-point id='0'>
+			<position>
+				<x>0</x>
+				<y>0</y>
+			</position>
+			<rotation>0</rotation>
+		</enemy-spawn-point>
+	</spawn-points>
+	<bonus-regions>
+		<!-- Здесь пока ничего трогать не буду -->
+	</bonus-regions>
+</map>

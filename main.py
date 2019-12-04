@@ -1,21 +1,21 @@
 import pygame
-from math import atan, degrees, cos, sin, radians
+from math import atan, degrees, cos, sin, radians, sqrt
 from random import randint
 
 
 class Bullet:
-    def __init__(self, velocity, source, damage=100):
-        self.source = source  # источник
+    def __init__(self, velocity, source_id, spawn, rotation, damage=100):
+        self.source_id = source_id  # 0 - player, 1 - enemy
         self.damage = damage  # урон
-        self.rotation = self.source.rotation  # поворот
+        self.rotation = rotation  # поворот
         self.velocity = velocity  # пикселей в секунду
         self.orig_texture = pygame.Surface((10, 10), pygame.SRCALPHA)
         self.orig_texture.fill(pygame.Color('red'))
         self.transformed_texture = self.orig_texture
-        self.rotate(self.source.rotation)
-        self.dx = cos(radians(self.source.rotation)) * self.velocity  # скорость по х
-        self.dy = sin(radians(self.source.rotation)) * self.velocity  # скорость по y
-        self.position = self.source.position
+        self.rotate(self.rotation)
+        self.dx = cos(radians(self.rotation)) * self.velocity  # скорость по х
+        self.dy = sin(radians(self.rotation)) * self.velocity  # скорость по y
+        self.position = spawn
         self.geometryToOrigin()
 
     def rotate(self, angle):
@@ -33,16 +33,47 @@ class Bullet:
 
 
 class Weapon:
-    def __init__(self, carrier, dispersion_limit):
-        self.carrier = carrier  # носитель оружия
+    def __init__(self, carrier_id, position, dispersion_limit, magazine_limit, bullet_velocity,
+                 bullet_damage):
+        self.magazine_limit = magazine_limit
+        self.magazine = self.magazine_limit
+        self.bullet_velocity = bullet_velocity
+        self.bullet_damage = bullet_damage
+        self.carrier_id = carrier_id  # носитель оружия (0 - player, 1 - enemy)
         self.dispersion_limit = dispersion_limit  # максимальный градус отклонения пуль от цели
         self.damage_per_bullet = 100  # дамаг одной пули
+        self.orig_texture = pygame.Surface((20, 60), pygame.SRCALPHA)
+        self.orig_texture.fill(pygame.Color('gray'))
+        self.transformed_texture = self.orig_texture
+        self.position = position
+        self.barrel_position = (self.position[0] + 10, self.position[1])
+        self.rotation = 0
 
-    def syncRotation(self):
-        pass
+    def syncRotation(self, point, angle):
+        self.rotate(angle)
+        # ------крутим тело------
+        x = abs(self.position[0] - point[0])
+        y = abs(self.position[1] - point[1])
+        r = sqrt(x ** 2 + y ** 2)
+        self.position = (cos(radians(self.rotation)) * r, sin(radians(self.rotation)) * r)
+        # ------крутим точку спавна пуль------
+        x = abs(self.barrel_position[0] - point[0])
+        y = abs(self.barrel_position[1] - point[1])
+        r = sqrt(x ** 2 + y ** 2)
+        self.barrel_position = (cos(radians(self.rotation)) * r, sin(radians(self.rotation)) * r)
+
+    def rotate(self, angle):
+        self.transformed_texture = pygame.transform.rotate(self.orig_texture, 360 - self.rotation)
+        self.rotation = angle
 
     def generateBullet(self):
-        pass
+        if self.magazine == 0:
+            self.magazine = self.magazine_limit
+            return None
+        return Bullet(self.bullet_velocity, self.carrier_id, self.barrel_position,
+                      self.rotation + randint(-self.dispersion_limit,
+                                              self.dispersion_limit), self.bullet_damage)
+
 
 class Player:
     def __init__(self, angle=0, v_position=(400, 300)):
@@ -53,14 +84,16 @@ class Player:
         self.orig_texture.fill((255, 255, 255))
         self.transformed_texture = self.orig_texture
         self.geometryToOrigin()
+        self.weapon = Weapon(0, (self.position[0] + 20, self.position[1] - 30), 5, 30, 500, 100)
 
     def rotate(self, angle):
         # Поскольку мы расчитывали поворот по часовой стрелке,
-        # а пайгейм крутит против часовой, вычитаем из 360 получившийся градус
+        # а пайгейм крутит против, вычитаем из 360 получившийся градус
         self.transformed_texture = pygame.transform.rotate(self.orig_texture, 360 - angle)
         self.rotation = angle
-        # ------Сдвигаем перса так, чтобы точка позиции на карте была в середине
+        # ------Сдвигаем перса так, чтобы точка позиции на карте была в середине------
         self.geometryToOrigin()
+        self.weapon.syncRotation(self.position, angle)
 
     def geometryToOrigin(self):
         bound_box = self.transformed_texture.get_bounding_rect()  # достаём рамку текстуры
@@ -92,7 +125,7 @@ class Player:
         self.rotate(angle)
 
     def shoot(self):
-        return Bullet(2000, self)
+        return self.weapon.generateBullet()
 
 
 class Map:

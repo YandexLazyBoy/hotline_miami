@@ -6,6 +6,7 @@ from random import randint, choice
 class Object:
     def __init__(self, position, rotation, texture):
         self.position = position
+        self.transformed_position = self.position
         self.rotation = rotation
         self.orig_texture = texture
         self.transformed_texture = self.orig_texture
@@ -19,7 +20,7 @@ class Object:
         bound_box = self.transformed_texture.get_bounding_rect()  # достаём рамку текстуры
         x = bound_box.width // 2  # вычисляем сдвиг
         y = bound_box.height // 2  # вычисляем сдвиг
-        self.position = (self.position[0] - x, self.position[1] - y)
+        self.transformed_position = (self.position[0] - x, self.position[1] - y)
 
 
 class Bullet(Object):
@@ -29,7 +30,6 @@ class Bullet(Object):
         super().__init__(spawn, rotation, texture)
         self.source_id = source_id  # 0 - player, 1 - enemy
         self.damage = damage  # урон
-        self.rotation = rotation  # поворот
         self.velocity = velocity  # пикселей в секунду
         self.rotate(self.rotation)  # поворачиваем в точку выстрела
         self.dx = cos(radians(self.rotation)) * self.velocity  # скорость по х
@@ -54,27 +54,31 @@ class Weapon(Object):
         self.dispersion_limit = dispersion_limit  # максимальный градус отклонения пуль от цели
         self.damage_per_bullet = 100  # дамаг одной пули
         self.barrel_position = (self.position[0] + 10, self.position[1])  # точка спавна пуль
+        self.transformed_barrel_position = self.barrel_position
 
     def syncRotation(self, point, angle):
         self.rotate(angle)
         # ------крутим тело------
         x = abs(self.position[0] - point[0])
         y = abs(self.position[1] - point[1])
-        print(x, y, end="")
         r = sqrt(x ** 2 + y ** 2)
-        print(r, end="")
-        self.position = (cos(radians(self.rotation)) * r, sin(radians(self.rotation)) * r)
-        print(self.position)
+        self.transformed_position = (self.position[0] + cos(radians(self.rotation)) * r,
+                                     self.position[1] + sin(radians(self.rotation)) * r)
         # ------крутим точку спавна пуль------
         x = abs(self.barrel_position[0] - point[0])
         y = abs(self.barrel_position[1] - point[1])
         r = sqrt(x ** 2 + y ** 2)
-        self.barrel_position = (cos(radians(self.rotation)) * r, sin(radians(self.rotation)) * r)
+        self.transformed_barrel_position = (self.barrel_position[0] + cos(radians(self.rotation)) * r,
+                                            self.barrel_position[1] + sin(radians(self.rotation)) * r)
 
     def rotate(self, angle):
         # перегружаем метод, ведь нам не нужен geometryToOrigin()
         self.transformed_texture = pygame.transform.rotate(self.orig_texture, 360 - angle)
         self.rotation = angle
+
+    def move(self, vec2):
+        self.position = (self.position[0] + vec2[0], self.position[1] + vec2[1])
+        self.barrel_position = (self.barrel_position[0] + vec2[0], self.barrel_position[1] + vec2[1])
 
     def generateBullet(self):
         if self.magazine == 0:  # проверка на отсутствие патронов в магазине
@@ -90,7 +94,7 @@ class Player(Object):
         texture = pygame.Surface((40, 40), pygame.SRCALPHA)
         texture.fill((255, 255, 255))
         super().__init__(position, angle, texture)
-        self.speed = 100
+        self.speed = 500
         self.viewport_position = position
         self.position = self.viewport_position
         self.geometryToOrigin()
@@ -99,12 +103,13 @@ class Player(Object):
 
     def rotate(self, angle):
         super().rotate(angle)
-        self.weapon.syncRotation(self.position, angle)
+        self.weapon.syncRotation(self.transformed_position, angle)
 
     def move(self, vec2, seconds):
-        x = self.position[0] + self.speed * seconds * vec2[0]
-        y = self.position[0] + self.speed * seconds * vec2[0]
+        x = self.speed * seconds * vec2[0]
+        y = self.speed * seconds * vec2[1]
         self.position = (self.position[0] + x, self.position[1] + y)
+        self.weapon.move((x, y))
 
     def trackTo(self, point):
         x = point[0] - self.viewport_position[0]  # разница между точками по x
@@ -153,8 +158,8 @@ class Map:
             self.bullets[i].update(seconds)
             self.render_canvas.blit(self.bullets[i].transformed_texture, self.bullets[i].position)
 
-        self.render_canvas.blit(world.player.transformed_texture, world.player.position)
-        self.render_canvas.blit(world.player.weapon.transformed_texture, world.player.weapon.position)
+        self.render_canvas.blit(world.player.transformed_texture, world.player.transformed_position)
+        self.render_canvas.blit(world.player.weapon.transformed_texture, world.player.weapon.transformed_position)
 
     def killBulletsInOffset(self):
         pass
@@ -167,7 +172,8 @@ screen = pygame.display.set_mode(size)
 screen.fill(pygame.Color('black'))
 
 fps = 60
-frame_time = 1 / fps
+# frame_time = 1 / fps
+frame_time = 0.016
 
 running = True
 clock = pygame.time.Clock()

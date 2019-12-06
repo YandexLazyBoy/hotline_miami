@@ -32,8 +32,8 @@ class Bullet(Object):
         self.damage = damage  # урон
         self.velocity = velocity  # пикселей в секунду
         self.rotate(self.rotation)  # поворачиваем в точку выстрела
-        self.dx = cos(radians(self.rotation)) * self.velocity  # скорость по х
-        self.dy = sin(radians(self.rotation)) * self.velocity  # скорость по y
+        self.dx = cos(radians(self.rotation - 90)) * self.velocity  # скорость по х
+        self.dy = sin(radians(self.rotation - 90)) * self.velocity  # скорость по y
         self.geometryToOrigin()
 
     def update(self, seconds):
@@ -90,16 +90,15 @@ class Weapon(Object):
 
 
 class Player(Object):
-    def __init__(self, position, angle=0):
+    def __init__(self, position, v_position, angle=0):
         texture = pygame.Surface((40, 40), pygame.SRCALPHA)
         texture.fill((255, 255, 255))
         super().__init__(position, angle, texture)
         self.speed = 500
-        self.viewport_position = position
-        self.position = self.viewport_position
+        self.viewport_position = v_position
         self.geometryToOrigin()
         self.weapon = Weapon(0, self.rotation,
-                             (self.position[0] + 20, self.position[1] - 30), 5, 30, 500, 100)
+                             (self.position[0] + 20, self.position[1] - 30), 5, 30, 2000, 100)
 
     def rotate(self, angle):
         super().rotate(angle)
@@ -110,6 +109,7 @@ class Player(Object):
         y = self.speed * seconds * vec2[1]
         self.position = (self.position[0] + x, self.position[1] + y)
         self.weapon.move((x, y))
+        self.rotate(self.rotation)
 
     def trackTo(self, point):
         x = point[0] - self.viewport_position[0]  # разница между точками по x
@@ -139,20 +139,22 @@ class Player(Object):
 
 
 class Map:
-    def __init__(self, *objects):
-        self.map_size = (1000, 1000)
+    def __init__(self, map_size, window_size):
+        self.map_size = map_size
         self.gg_spawns = [(100, 100), (400, 400)]
         self.orig_canvas = pygame.Surface(self.map_size)
         self.orig_canvas.fill((50, 50, 50))
         self.render_canvas = self.orig_canvas
         self.bullets = list()
-        self.player = Player(choice(self.gg_spawns))
+        self.camera_size = window_size
+        v_position = (window_size[0] // 2, window_size[1] // 2)
+        self.player = Player(choice(self.gg_spawns), v_position)
 
     def checkCollision(self):
         pass
 
     def render(self, seconds):
-        self.render_canvas = pygame.Surface(self.map_size)
+        self.render_canvas = self.orig_canvas.copy()
 
         for i in range(len(self.bullets)):
             self.bullets[i].update(seconds)
@@ -165,11 +167,11 @@ class Map:
         pass
 
 
-world = Map((1000, 1000))
-
 size = width, height = 800, 600
 screen = pygame.display.set_mode(size)
 screen.fill(pygame.Color('black'))
+
+world = Map((1000, 1000), size)
 
 fps = 60
 # frame_time = 1 / fps
@@ -199,7 +201,8 @@ while running:
 
     screen.fill(pygame.Color('black'))
     world.render(frame_time)
-    screen.blit(world.render_canvas, (0, 0))
+    screen.blit(world.render_canvas, (world.player.viewport_position[0] - world.player.position[0],
+                                      world.player.viewport_position[1] - world.player.position[1]))
 
     pygame.display.flip()
     clock.tick(fps)

@@ -28,6 +28,7 @@ class Bullet(Object):
         texture = pygame.Surface((10, 10), pygame.SRCALPHA)
         texture.fill(pygame.Color('red'))
         super().__init__(spawn, rotation, texture)
+        print(spawn)
         self.source_id = source_id  # 0 - player, 1 - enemy
         self.damage = damage  # урон
         self.velocity = velocity  # пикселей в секунду
@@ -53,8 +54,9 @@ class Weapon(Object):
         self.carrier_id = carrier_id  # носитель оружия (0 - player, 1 - enemy)
         self.dispersion_limit = dispersion_limit  # максимальный градус отклонения пуль от цели
         self.damage_per_bullet = 100  # дамаг одной пули
-        self.barrel_position = (self.position[0] + 10, self.position[1])  # точка спавна пуль
+        self.barrel_position = (self.position[0], self.position[1])  # точка спавна пуль
         self.transformed_barrel_position = self.barrel_position
+        self.geometryToOrigin()
 
     def syncRotation(self, point, angle):
         self.rotate(angle)
@@ -62,19 +64,15 @@ class Weapon(Object):
         x = abs(self.position[0] - point[0])
         y = abs(self.position[1] - point[1])
         r = sqrt(x ** 2 + y ** 2)
-        self.transformed_position = (self.position[0] - r + cos(radians(self.rotation)) * r,
-                                     self.position[1] + r // 2 + sin(radians(self.rotation)) * r)
+        a = angle - 45
+        self.transformed_position = (self.transformed_position[0] - x + cos(radians(a)) * r,
+                                     self.transformed_position[1] - x + sin(radians(a)) * r)
         # ------крутим точку спавна пуль------
         x = abs(self.barrel_position[0] - point[0])
         y = abs(self.barrel_position[1] - point[1])
         r = sqrt(x ** 2 + y ** 2)
-        self.transformed_barrel_position = (self.barrel_position[0] - r + cos(radians(self.rotation)) * r,
-                                            self.barrel_position[1] + r // 2 + sin(radians(self.rotation)) * r)
-
-    def rotate(self, angle):
-        # перегружаем метод, ведь нам не нужен geometryToOrigin()
-        self.transformed_texture = pygame.transform.rotate(self.orig_texture, 360 - angle)
-        self.rotation = angle
+        self.transformed_barrel_position = (self.barrel_position[0] - x + cos(radians(a)) * r,
+                                            self.barrel_position[1] - x + sin(radians(a)) * r)
 
     def move(self, vec2):
         self.position = (self.position[0] + vec2[0], self.position[1] + vec2[1])
@@ -84,7 +82,7 @@ class Weapon(Object):
         if self.magazine == 0:  # проверка на отсутствие патронов в магазине
             self.magazine = self.magazine_limit
             return None
-        return Bullet(self.bullet_velocity, self.carrier_id, self.barrel_position,
+        return Bullet(self.bullet_velocity, self.carrier_id, self.transformed_barrel_position,
                       self.rotation + randint(-self.dispersion_limit,
                                               self.dispersion_limit), self.bullet_damage)
 
@@ -98,7 +96,7 @@ class Player(Object):
         self.viewport_position = v_position
         self.geometryToOrigin()
         self.weapon = Weapon(0, self.rotation,
-                             (self.position[0] + 20, self.position[1] - 30), 5, 30, 2000, 100)
+                             (self.position[0] + 30, self.position[1] + 30), 5, 30, 2000, 100)
 
     def rotate(self, angle):
         super().rotate(angle)

@@ -62,14 +62,14 @@ class Weapon(Object):
         x = abs(self.position[0] - point[0])
         y = abs(self.position[1] - point[1])
         r = sqrt(x ** 2 + y ** 2)
-        self.transformed_position = (self.position[0] + cos(radians(self.rotation)) * r,
-                                     self.position[1] + sin(radians(self.rotation)) * r)
+        self.transformed_position = (self.position[0] - r + cos(radians(self.rotation)) * r,
+                                     self.position[1] + r // 2 + sin(radians(self.rotation)) * r)
         # ------крутим точку спавна пуль------
         x = abs(self.barrel_position[0] - point[0])
         y = abs(self.barrel_position[1] - point[1])
         r = sqrt(x ** 2 + y ** 2)
-        self.transformed_barrel_position = (self.barrel_position[0] + cos(radians(self.rotation)) * r,
-                                            self.barrel_position[1] + sin(radians(self.rotation)) * r)
+        self.transformed_barrel_position = (self.barrel_position[0] - r + cos(radians(self.rotation)) * r,
+                                            self.barrel_position[1] + r // 2 + sin(radians(self.rotation)) * r)
 
     def rotate(self, angle):
         # перегружаем метод, ведь нам не нужен geometryToOrigin()
@@ -103,7 +103,7 @@ class Player(Object):
 
     def rotate(self, angle):
         super().rotate(angle)
-        self.weapon.syncRotation(self.transformed_position, angle)
+        self.weapon.syncRotation(self.position, angle)
 
     def move(self, vec2, seconds):
         x = self.speed * seconds * vec2[0]
@@ -196,15 +196,6 @@ while running:
         world.player.move((1, 0), frame_time)
     if keys[pygame.K_LEFT] or keys[pygame.K_a]:
         world.player.move((-1, 0), frame_time)
-
-    """elif keys[pygame.K_UP] or keys[pygame.K_w]:
-            world.player.move((0, -1), frame_time)
-        elif keys[pygame.K_DOWN] or keys[pygame.K_s]:
-            world.player.move((0, 1), frame_time)
-        elif keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-            world.player.move((1, 0), frame_time)
-        elif keys[pygame.K_LEFT] or keys[pygame.K_a]:
-            world.player.move((-1, 0), frame_time)"""
 
     screen.fill(pygame.Color('black'))
     world.render(frame_time)

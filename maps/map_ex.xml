@@ -1,10 +1,11 @@
-<map version="0.1.Lite">
+<map version="0.1.Lite" size="1000x1000">
 	<static-geometry>
 		<prop library='Ex_library' name='Some_name'>
 			<position>
 				<x>0</x>
 				<y>0</y>
 			</position>
+			<rotation>0</rotation>
 		</prop>
 	</static-geometry>
 	<collision-geometry>
@@ -17,6 +18,7 @@
 				<x>0</x>
 				<y>0</y>
 			</position>
+			<rotation>0</rotation>
 		</collision-rect>
 	</collision-geometry>
 	<spawn-points>

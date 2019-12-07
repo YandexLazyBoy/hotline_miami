@@ -66,13 +66,13 @@ class Weapon(Object):
         r = sqrt(x ** 2 + y ** 2)
         a = angle - 45
         self.transformed_position = (self.transformed_position[0] - x + cos(radians(a)) * r,
-                                     self.transformed_position[1] - x + sin(radians(a)) * r)
+                                     self.transformed_position[1] - y + sin(radians(a)) * r)
         # ------крутим точку спавна пуль------
         x = abs(self.barrel_position[0] - point[0])
         y = abs(self.barrel_position[1] - point[1])
         r = sqrt(x ** 2 + y ** 2)
         self.transformed_barrel_position = (self.barrel_position[0] - x + cos(radians(a)) * r,
-                                            self.barrel_position[1] - x + sin(radians(a)) * r)
+                                            self.barrel_position[1] - y + sin(radians(a)) * r)
 
     def move(self, vec2):
         self.position = (self.position[0] + vec2[0], self.position[1] + vec2[1])
@@ -129,37 +129,71 @@ class Player(Object):
             angle = 180
         elif y == 0 and x > 0:
             angle = 90
-        # ------Собсна, поворачиваем перса------
+        # ------Собсна, поворачиваем перса------sd
         self.rotate(angle)
 
     def shoot(self):
         return self.weapon.generateBullet()
 
 
+class CollisionRect:
+    def __init__(self, position, size):
+        self.position = position
+        self.size = size
+
+    def pointCollision(self, point):
+        if self.position[0] <= point[0] <= self.position[0] + self.size[0] and \
+                self.position[1] <= point[1] <= self.position[1] + self.size[1]:
+            return True
+        return False
+
+    def getVertexesCoords(self):
+        pass
+
+
+class StaticRect:
+    def __init__(self, position, size):
+        self.texture = pygame.Surface(size, pygame.SRCALPHA)
+        self.texture.fill((230, 230, 255))
+        self.position = position
+
+
+
+
 class Map:
     def __init__(self, map_size, window_size):
         self.map_size = map_size
-        self.gg_spawns = [(100, 100), (400, 400)]
+        self.gg_spawns = [(100, 100)]
         self.orig_canvas = pygame.Surface(self.map_size)
         self.orig_canvas.fill((50, 50, 50))
         self.render_canvas = self.orig_canvas
         self.bullets = list()
         self.camera_size = window_size
+        self.static_geometry = [StaticRect((200, 100), (400, 200))]
+        self.collision_geometry = [CollisionRect((200, 100), (400, 200))]
         v_position = (window_size[0] // 2, window_size[1] // 2)
         self.player = Player(choice(self.gg_spawns), v_position)
 
     def checkCollision(self):
-        pass
+        bullet_indexes = list()
+        for i in range(len(self.bullets) - 1, 0, -1):
+            for rect in self.collision_geometry:
+                if rect.pointCollision(self.bullets[i].position):
+                    bullet_indexes.append(i)
+
+        for index in bullet_indexes:
+            del self.bullets[index]
 
     def render(self, seconds):
         self.render_canvas = self.orig_canvas.copy()
-
+        self.checkCollision()
         for i in range(len(self.bullets)):
             self.bullets[i].update(seconds)
             self.render_canvas.blit(self.bullets[i].transformed_texture, self.bullets[i].position)
-
         self.render_canvas.blit(world.player.transformed_texture, world.player.transformed_position)
         self.render_canvas.blit(world.player.weapon.transformed_texture, world.player.weapon.transformed_position)
+        for geom in self.static_geometry:
+            self.render_canvas.blit(geom.texture, geom.position)
 
     def killBulletsInOffset(self):
         pass

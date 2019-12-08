@@ -1,26 +1,34 @@
 import pygame
 from math import atan, degrees, cos, sin, radians, sqrt
 from random import randint, choice
+from scripts.spriteTricks import Group
 
 
-class Object:
+class Object(pygame.sprite.Sprite):
     def __init__(self, position, rotation, texture):
+        super().__init__()
         self.position = position
         self.transformed_position = self.position
         self.rotation = rotation
         self.orig_texture = texture
         self.transformed_texture = self.orig_texture
+        self.rect = self.transformed_texture.get_rect()
 
     def rotate(self, angle):
         self.transformed_texture = pygame.transform.rotate(self.orig_texture, 360 - self.rotation)
         self.rotation = angle
         self.geometryToOrigin()
 
+    def updateRect(self):
+        self.rect = self.transformed_texture.get_rect()
+        self.rect.move_ip(self.transformed_position)
+
     def geometryToOrigin(self):
         bound_box = self.transformed_texture.get_bounding_rect()  # достаём рамку текстуры
         x = bound_box.width // 2  # вычисляем сдвиг
         y = bound_box.height // 2  # вычисляем сдвиг
         self.transformed_position = (self.position[0] - x, self.position[1] - y)
+        self.updateRect()
 
 
 class Bullet(Object):
@@ -28,14 +36,12 @@ class Bullet(Object):
         texture = pygame.Surface((10, 10), pygame.SRCALPHA)
         texture.fill(pygame.Color('red'))
         super().__init__(spawn, rotation, texture)
-        print(spawn)
         self.source_id = source_id  # 0 - player, 1 - enemy
         self.damage = damage  # урон
         self.velocity = velocity  # пикселей в секунду
         self.rotate(self.rotation)  # поворачиваем в точку выстрела
         self.dx = cos(radians(self.rotation - 90)) * self.velocity  # скорость по х
         self.dy = sin(radians(self.rotation - 90)) * self.velocity  # скорость по y
-        self.geometryToOrigin()
 
     def update(self, seconds):
         self.position = (self.position[0] + self.dx * seconds, self.position[1] + self.dy * seconds)
@@ -73,6 +79,7 @@ class Weapon(Object):
         r = sqrt(x ** 2 + y ** 2)
         self.transformed_barrel_position = (self.barrel_position[0] - x + cos(radians(a)) * r,
                                             self.barrel_position[1] - y + sin(radians(a)) * r)
+        self.updateRect()
 
     def move(self, vec2):
         self.position = (self.position[0] + vec2[0], self.position[1] + vec2[1])
@@ -96,15 +103,26 @@ class Player(Object):
         self.viewport_position = v_position
         self.geometryToOrigin()
         self.weapon = Weapon(0, self.rotation,
-                             (self.position[0] + 30, self.position[1] + 30), 5, 30, 2000, 100)
+                             (self.position[0] + 30, self.position[1] + 30), 5, 30, 1000, 100)
 
     def rotate(self, angle):
         super().rotate(angle)
         self.weapon.syncRotation(self.position, angle)
 
-    def move(self, vec2, seconds):
+    def move(self, vec2, seconds, collision_geometry):
         x = self.speed * seconds * vec2[0]
         y = self.speed * seconds * vec2[1]
+        cf = [1, 1]
+
+        for corect in collision_geometry:
+            if self.rect.colliderect(corect):
+                if corect.top <= self.rect.bottom or self.rect.top <= corect.bottom:
+                    cf[1] = 0
+                if corect.left <= self.rect.right or self.rect.left <= corect.right:
+                    cf[0] = 0
+
+        x *= cf[0]
+        y *= cf[1]
         self.position = (self.position[0] + x, self.position[1] + y)
         self.weapon.move((x, y))
         self.rotate(self.rotation)
@@ -129,35 +147,19 @@ class Player(Object):
             angle = 180
         elif y == 0 and x > 0:
             angle = 90
-        # ------Собсна, поворачиваем перса------sd
+        # ------Собсна, поворачиваем перса------
         self.rotate(angle)
 
-    def shoot(self):
-        return self.weapon.generateBullet()
+    def shoot(self, add):
+        add(self.weapon.generateBullet())
 
 
-class CollisionRect:
+class StaticSprite(pygame.sprite.Sprite):
     def __init__(self, position, size):
+        super().__init__()
+        self.transformed_texture = pygame.Surface(size, pygame.SRCALPHA)
+        self.transformed_texture.fill((230, 230, 255))
         self.position = position
-        self.size = size
-
-    def pointCollision(self, point):
-        if self.position[0] <= point[0] <= self.position[0] + self.size[0] and \
-                self.position[1] <= point[1] <= self.position[1] + self.size[1]:
-            return True
-        return False
-
-    def getVertexesCoords(self):
-        pass
-
-
-class StaticRect:
-    def __init__(self, position, size):
-        self.texture = pygame.Surface(size, pygame.SRCALPHA)
-        self.texture.fill((230, 230, 255))
-        self.position = position
-
-
 
 
 class Map:
@@ -167,36 +169,31 @@ class Map:
         self.orig_canvas = pygame.Surface(self.map_size)
         self.orig_canvas.fill((50, 50, 50))
         self.render_canvas = self.orig_canvas
-        self.bullets = list()
+        self.bullets = Group()
         self.camera_size = window_size
-        self.static_geometry = [StaticRect((200, 100), (400, 200))]
-        self.collision_geometry = [CollisionRect((200, 100), (400, 200))]
+        self.static_geometry = Group(StaticSprite((200, 100), (400, 32)))
+        self.collision_geometry = [pygame.Rect((200, 100), (400, 32))]
         v_position = (window_size[0] // 2, window_size[1] // 2)
         self.player = Player(choice(self.gg_spawns), v_position)
 
     def checkCollision(self):
-        bullet_indexes = list()
-        for i in range(len(self.bullets) - 1, 0, -1):
+        for bullet in self.bullets:
             for rect in self.collision_geometry:
-                if rect.pointCollision(self.bullets[i].position):
-                    bullet_indexes.append(i)
-
-        for index in bullet_indexes:
-            del self.bullets[index]
+                if rect.collidepoint(bullet.position):
+                    bullet.kill()
+            if (0 > bullet.position[0] or bullet.position[0] > self.map_size[0] or
+                    0 > bullet.position[1] or bullet.position[1] > self.map_size[1]):
+                bullet.kill()
+        print(len(self.bullets.sprites()))
 
     def render(self, seconds):
         self.render_canvas = self.orig_canvas.copy()
+        self.bullets.update(seconds)
         self.checkCollision()
-        for i in range(len(self.bullets)):
-            self.bullets[i].update(seconds)
-            self.render_canvas.blit(self.bullets[i].transformed_texture, self.bullets[i].position)
+        self.bullets.draw(self.render_canvas)
+        self.static_geometry.draw(self.render_canvas)
         self.render_canvas.blit(world.player.transformed_texture, world.player.transformed_position)
         self.render_canvas.blit(world.player.weapon.transformed_texture, world.player.weapon.transformed_position)
-        for geom in self.static_geometry:
-            self.render_canvas.blit(geom.texture, geom.position)
-
-    def killBulletsInOffset(self):
-        pass
 
 
 size = width, height = 800, 600
@@ -219,17 +216,17 @@ while running:
         if event.type == pygame.MOUSEMOTION:
             world.player.trackTo(event.pos)
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-            world.bullets.append(world.player.shoot())
+            world.player.shoot(world.bullets.add)
 
     keys = pygame.key.get_pressed()
     if keys[pygame.K_UP] or keys[pygame.K_w]:
-        world.player.move((0, -1), frame_time)
+        world.player.move((0, -1), frame_time, world.collision_geometry)
     if keys[pygame.K_DOWN] or keys[pygame.K_s]:
-        world.player.move((0, 1), frame_time)
+        world.player.move((0, 1), frame_time, world.collision_geometry)
     if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-        world.player.move((1, 0), frame_time)
+        world.player.move((1, 0), frame_time, world.collision_geometry)
     if keys[pygame.K_LEFT] or keys[pygame.K_a]:
-        world.player.move((-1, 0), frame_time)
+        world.player.move((-1, 0), frame_time, world.collision_geometry)
 
     screen.fill(pygame.Color('black'))
     world.render(frame_time)

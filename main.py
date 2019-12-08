@@ -95,34 +95,63 @@ class Weapon(Object):
 
 
 class Player(Object):
-    def __init__(self, position, v_position, angle=0):
+    def __init__(self, position, v_position, collision_geometry, angle=0):
         texture = pygame.Surface((40, 40), pygame.SRCALPHA)
         texture.fill((255, 255, 255))
         super().__init__(position, angle, texture)
         self.speed = 500
         self.viewport_position = v_position
+        self.collision_geometry = collision_geometry
         self.geometryToOrigin()
         self.weapon = Weapon(0, self.rotation,
                              (self.position[0] + 30, self.position[1] + 30), 5, 30, 1000, 100)
+        self.vector = (0, 0)
 
     def rotate(self, angle):
         super().rotate(angle)
         self.weapon.syncRotation(self.position, angle)
+        if self.collision_geometry:
+            self.collideandmove()
 
-    def move(self, vec2, seconds, collision_geometry):
+    def collideandmove(self):
+        # Внимание - говнокод! Не лесб, оно тебя сожрёт
+        dpos = (self.position[0] - self.transformed_position[0],
+                self.position[1] - self.transformed_position[1])
+        x = self.weapon.position[0] - self.position[0] - 30
+        y = self.weapon.position[1] - self.position[1] - 30
+        for corect in self.collision_geometry:
+            if self.rect.colliderect(corect):
+                if self.vector[1] > 0:
+                    self.weapon.move((0, -y))
+                    self.transformed_position = (self.transformed_position[0],
+                                                 corect.top - self.rect.size[1] + 1)
+                    self.position = (self.position[0],
+                                     self.transformed_position[1] + dpos[1])
+
+                if self.vector[1] < 0:
+                    self.weapon.move((0, -y))
+                    self.transformed_position = (self.transformed_position[0],
+                                                 corect.bottom)
+                    self.position = (self.position[0],
+                                     self.transformed_position[1] + dpos[1])
+
+                if self.vector[0] > 0:
+                    self.weapon.move((-x, 0))
+                    self.transformed_position = (corect.left - self.rect.size[0] + 1,
+                                                 self.transformed_position[1])
+                    self.position = (self.transformed_position[0] - dpos[0],
+                                     self.position[1])
+
+                if self.vector[0] < 0:
+                    self.weapon.move((-x, 0))
+                    self.transformed_position = (corect.right, self.transformed_position[1])
+                    self.position = (self.transformed_position[0] + dpos[0],
+                                     self.position[1])
+
+    def move(self, vec2, seconds):
         x = self.speed * seconds * vec2[0]
         y = self.speed * seconds * vec2[1]
-        cf = [1, 1]
-
-        for corect in collision_geometry:
-            if self.rect.colliderect(corect):
-                if corect.top <= self.rect.bottom or self.rect.top <= corect.bottom:
-                    cf[1] = 0
-                if corect.left <= self.rect.right or self.rect.left <= corect.right:
-                    cf[0] = 0
-
-        x *= cf[0]
-        y *= cf[1]
+        self.vector = vec2
         self.position = (self.position[0] + x, self.position[1] + y)
         self.weapon.move((x, y))
         self.rotate(self.rotation)
@@ -174,7 +203,7 @@ class Map:
         self.static_geometry = Group(StaticSprite((200, 100), (400, 32)))
         self.collision_geometry = [pygame.Rect((200, 100), (400, 32))]
         v_position = (window_size[0] // 2, window_size[1] // 2)
-        self.player = Player(choice(self.gg_spawns), v_position)
+        self.player = Player(choice(self.gg_spawns), v_position, self.collision_geometry)
 
     def checkCollision(self):
         for bullet in self.bullets:
@@ -184,7 +213,6 @@ class Map:
             if (0 > bullet.position[0] or bullet.position[0] > self.map_size[0] or
                     0 > bullet.position[1] or bullet.position[1] > self.map_size[1]):
                 bullet.kill()
-        print(len(self.bullets.sprites()))
 
     def render(self, seconds):
         self.render_canvas = self.orig_canvas.copy()
@@ -220,13 +248,13 @@ while running:
 
     keys = pygame.key.get_pressed()
     if keys[pygame.K_UP] or keys[pygame.K_w]:
-        world.player.move((0, -1), frame_time, world.collision_geometry)
+        world.player.move((0, -1), frame_time)
     if keys[pygame.K_DOWN] or keys[pygame.K_s]:
-        world.player.move((0, 1), frame_time, world.collision_geometry)
+        world.player.move((0, 1), frame_time)
     if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-        world.player.move((1, 0), frame_time, world.collision_geometry)
+        world.player.move((1, 0), frame_time)
     if keys[pygame.K_LEFT] or keys[pygame.K_a]:
-        world.player.move((-1, 0), frame_time, world.collision_geometry)
+        world.player.move((-1, 0), frame_time)
 
     screen.fill(pygame.Color('black'))
     world.render(frame_time)

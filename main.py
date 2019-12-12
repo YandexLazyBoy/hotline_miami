@@ -1,7 +1,7 @@
-import pygame
 from math import atan, degrees, cos, sin, radians, sqrt
 from random import randint, choice
-from scripts.spriteTricks import Group
+from scripts import spriteTricks
+import pygame
 
 
 class Object(pygame.sprite.Sprite):
@@ -29,6 +29,37 @@ class Object(pygame.sprite.Sprite):
         y = bound_box.height // 2  # вычисляем сдвиг
         self.transformed_position = (self.position[0] - x, self.position[1] - y)
         self.updateRect()
+
+
+class AnimObject(Object):
+    def __init__(self, position, rotation, frame_time, frames, direction=True):
+        self.frame_time = frame_time
+        self.frames = frames
+        super().__init__(position, rotation, self.frames[0])
+        self.direction = direction  # True 0-n, False n-0
+        self.current_time = 0
+        self.current_frame = 0
+
+    def update(self, dt):
+        self.current_frame += 1
+        self.current_time += dt
+        lim = self.frame_time * len(self.frames)
+        if lim <= self.current_time:
+            self.current_time -= lim
+
+            if self.frame_time <= self.current_time:  # TODO возможно, оно как-то оптимизируется
+                if self.direction:
+                    self.current_frame += 1
+                else:
+                    self.current_frame -= 1
+
+                if len(self.frames) - 1 <= self.current_frame:
+                    self.current_frame = 0
+                elif self.current_frame < 0:
+                    self.current_frame = len(self.frames) - 1
+
+            self.orig_texture = self.frames[self.current_frame]
+            self.transformed_texture = self.orig_texture
 
 
 class Bullet(Object):
@@ -198,9 +229,9 @@ class Map:
         self.orig_canvas = pygame.Surface(self.map_size)
         self.orig_canvas.fill((50, 50, 50))
         self.render_canvas = self.orig_canvas
-        self.bullets = Group()
+        self.bullets = spriteTricks.Group()
         self.camera_size = window_size
-        self.static_geometry = Group(StaticSprite((200, 100), (400, 32)))
+        self.static_geometry = spriteTricks.Group(StaticSprite((200, 100), (400, 32)))
         self.collision_geometry = [pygame.Rect((200, 100), (400, 32))]
         v_position = (window_size[0] // 2, window_size[1] // 2)
         self.player = Player(choice(self.gg_spawns), v_position, self.collision_geometry)

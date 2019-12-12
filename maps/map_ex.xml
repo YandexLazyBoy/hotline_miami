@@ -1,6 +1,6 @@
 <map version="0.1.Lite" size="1000x1000">
 	<static-geometry>
-		<prop library='Ex_library' name='Some_name'>
+		<prop name='Some_name'>
 			<position>
 				<x>0</x>
 				<y>0</y>

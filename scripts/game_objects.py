@@ -5,10 +5,17 @@ from scripts.collision import *
 
 
 class StaticSprite(pygame.sprite.Sprite):
-    def __init__(self, position, size):
+    def __init__(self, img, position, rotation):
         super().__init__()
-        self.transformed_texture = pygame.Surface(size, pygame.SRCALPHA)
-        self.transformed_texture.fill((230, 230, 255))
+        self.transformed_texture = pygame.transform.rotate(img, rotation)
+        self.position = position
+
+
+class AnimatedSprite(pygame.sprite.Sprite):
+    def __init__(self, img_seq, position, rotation):
+        super().__init__()
+        self.transformed_texture = pygame.transform.rotate(img_seq, rotation)
+        self.rotation = rotation
         self.position = position
 
 

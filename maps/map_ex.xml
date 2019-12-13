@@ -1,9 +1,16 @@
 <map version="0.1.Lite" size="1000x1000">
 	<static-geometry>
-		<prop name='Some_name'>
+		<prop lib="animated" name="img1 seq">
 			<position>
-				<x>0</x>
-				<y>0</y>
+				<x>3</x>
+				<y>2</y>
+			</position>
+			<rotation>0</rotation>
+		</prop>
+		<prop lib="static" name="img2">
+			<position>
+				<x>1</x>
+				<y>2</y>
 			</position>
 			<rotation>0</rotation>
 		</prop>
@@ -20,6 +27,13 @@
 			</position>
 			<rotation>0</rotation>
 		</collision-rect>
+		<collision-mask name="img3">
+			<position>
+				<x>1</x>
+				<y>2</y>
+			</position>
+			<rotation>0</rotation>
+		</collision-mask>
 	</collision-geometry>
 	<spawn-points>
 		<gg-spawn-point>

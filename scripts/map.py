@@ -104,16 +104,30 @@ class Librarian:
         print('\nSuccess loadings:', str(success) + ', errors:', errors)
 
 
-def load_map(name, libs, version):
+def load_map(name, libs: Librarian, version):
     tree = ET.parse(os.path.join('maps', name))
     root = tree.getroot()
-    size = root.attrib['size'].split('x')
+    size = map(int, root.attrib['size'].split('x'))
     static_geometry = list()
+    animated_geometry = list()
     collision_geometry = list()
     if version == root.attrib['version']:
         for prop in root.find('static-geometry'):
-            print(prop.attrib)
+            if prop.attrib['lib'] == 'static':
+                img = libs.img_library.get(prop.attrib['name'], 1)
+                if img is not None:
+                    prop_position = prop.find('position')
+                    prop_position = int(prop_position.find('x').text), int(prop_position.find('y').text)
+                    static_geometry.append(StaticSprite(img, prop_position, prop.find('rotation').text))
+                else:
+                    print(prop.attrib[prop.attrib['name']], 'not found in library')
+            elif prop.attrib['lib'] == 'animated':
+                img_seq = libs.seq_library.get(prop.attrib['name'], None)
+                if img_seq is not None:
+                    prop_position = prop.find('position')
+                    prop_position = int(prop_position.find('x').text), int(prop_position.find('y').text)
 
+            print(prop.attrib)
     else:
         print('Selected map not compatible with current version of program')
 

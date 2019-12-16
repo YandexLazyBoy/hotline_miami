@@ -103,6 +103,10 @@ class Librarian:
                             errors += 1
         print('\nSuccess loadings:', str(success) + ', errors:', errors)
 
+# памятка разрабу:
+# елемент seq_library состоит из ([картинки], время кадра, иногда маска коллизии)
+# img_library выглядит проще - (картинка, +- маска)
+
 
 def load_map(name, libs: Librarian, version):
     tree = ET.parse(os.path.join('maps', name))
@@ -118,7 +122,7 @@ def load_map(name, libs: Librarian, version):
                 if img is not None:
                     prop_position = prop.find('position')
                     prop_position = int(prop_position.find('x').text), int(prop_position.find('y').text)
-                    static_geometry.append(StaticSprite(img, prop_position, prop.find('rotation').text))
+                    static_geometry.append(StaticSprite(img, prop_position, int(prop.find('rotation').text)))
                 else:
                     print(prop.attrib[prop.attrib['name']], 'not found in library')
             elif prop.attrib['lib'] == 'animated':
@@ -126,6 +130,7 @@ def load_map(name, libs: Librarian, version):
                 if img_seq is not None:
                     prop_position = prop.find('position')
                     prop_position = int(prop_position.find('x').text), int(prop_position.find('y').text)
+                    animated_geometry.append()
 
             print(prop.attrib)
     else:

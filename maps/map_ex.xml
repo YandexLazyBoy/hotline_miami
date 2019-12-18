@@ -5,14 +5,14 @@
 				<x>3</x>
 				<y>2</y>
 			</position>
-			<rotation>0</rotation>
+			<layer>0</layer>
 		</prop>
 		<prop lib="static" name="img2">
 			<position>
 				<x>1</x>
 				<y>2</y>
 			</position>
-			<rotation>0</rotation>
+			<layer>0</layer>
 		</prop>
 	</static-geometry>
 	<collision-geometry>

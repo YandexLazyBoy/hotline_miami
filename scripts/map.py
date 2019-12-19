@@ -51,75 +51,86 @@ class Librarian:
                         f_type = contents[0]
                         lib_name = contents[2]
                         if f_type == 'single image':
-                            image = self.load_image(os.path.join(root, contents[1]), color_key=-1)
-                            if image:
-                                if len(contents) > 3:
-                                    mask = self.load_image(os.path.join(root,
-                                                                        contents[-1]))
-                                    if mask:
-                                        self.img_library[lib_name] = image,  mask
-                                        success += 1
-                                    else:
-                                        print(os.path.join(root, contents[-1]), 'can not be loaded')
-                                        errors += 1
-                                else:
-                                    self.img_library[lib_name] = tuple(image)
-                                    success += 1
-                            else:
-                                print(os.path.join(root, contents[1]), 'can not be loaded')
-                                errors += 1
-                        elif f_type == 'image sequence':
-                            sequence = contents[1].split(', ')
-                            image_seq = [self.load_image(os.path.join(root, image),
-                                                         color_key=-1) for image in sequence]
-                            if not (None in image_seq):
-                                try:
-                                    frame_time = float(contents[3])
-                                except ValueError:
-                                    frame_time = None
-                                if frame_time and 0 < frame_time:
-                                    if len(contents) > 4:
-                                        mask = self.load_image(os.path.join(root, contents[-1]))
+                            if lib_name not in self.img_library.keys():
+                                image = self.load_image(os.path.join(root, contents[1]), color_key=-1)
+                                if image:
+                                    if len(contents) > 3:
+                                        mask = self.load_image(os.path.join(root,
+                                                                            contents[-1]))
                                         if mask:
-                                            self.seq_library[lib_name] = image_seq, frame_time, mask
+                                            self.img_library[lib_name] = image,  mask
                                             success += 1
                                         else:
                                             print(os.path.join(root, contents[-1]), 'can not be loaded')
                                             errors += 1
                                     else:
-                                        self.seq_library[lib_name] = image_seq, frame_time
+                                        self.img_library[lib_name] = tuple(image)
                                         success += 1
                                 else:
-                                    print(os.path.join(root, file), 'has wrong frame time')
+                                    print(os.path.join(root, contents[1]), 'can not be loaded')
                                     errors += 1
                             else:
-                                for i in range(len(sequence)):
-                                    if image_seq[i] is None:
-                                        print(os.path.join(root, sequence[i]), 'can not be loaded')
+                                print(os.path.join(root, file), 'has non-unique lib name')
+                                errors += 1
+                        elif f_type == 'image sequence':
+                            if lib_name not in self.seq_library.keys():
+                                sequence = contents[1].split(', ')
+                                if len(set(sequence)) == len(sequence):
+                                    image_seq = [self.load_image(os.path.join(root, image),
+                                                                 color_key=-1) for image in sequence]
+                                    if not (None in image_seq):
+                                        try:
+                                            frame_time = float(contents[3])
+                                        except ValueError:
+                                            frame_time = None
+                                        if frame_time and 0 < frame_time:
+                                            if len(contents) > 4:
+                                                mask = self.load_image(os.path.join(root, contents[-1]))
+                                                if mask:
+                                                    self.seq_library[lib_name] = image_seq, frame_time, mask
+                                                    success += 1
+                                                else:
+                                                    print(os.path.join(root, contents[-1]), 'can not be loaded')
+                                                    errors += 1
+                                            else:
+                                                self.seq_library[lib_name] = image_seq, frame_time
+                                                success += 1
+                                        else:
+                                            print(os.path.join(root, file), 'has wrong frame time')
+                                            errors += 1
+                                    else:
+                                        for i in range(len(sequence)):
+                                            if image_seq[i] is None:
+                                                print(os.path.join(root, sequence[i]), 'can not be loaded')
+                                        errors += 1
+                                else:
+                                    print(os.path.join(root, file), 'has non-unique frames')
+                                    errors += 1
+                            else:
+                                print(os.path.join(root, file), 'has non-unique lib name')
                                 errors += 1
                         elif f_type == 'sequence atlas':
-                            image = self.load_image(os.path.join(root, contents[1]), color_key=-1)
-                            if image:
-                                try:
-                                    frame_size = tuple(map(int, contents[3].split('x')))
-                                except ValueError:
-                                    frame_size = None
-                                if frame_size:
+                            if lib_name not in self.seq_library.keys():
+                                image = self.load_image(os.path.join(root, contents[1]), color_key=-1)
+                                if image:
                                     try:
-                                        frame_time = float(contents[4])
+                                        frame_size = tuple(map(int, contents[3].split('x')))
                                     except ValueError:
-                                        frame_time = None
-                                    rects = [tuple(map(int, rect.split('x'))) for rect in contents[5].split(', ')]
-                                    if frame_time:
-                                        if rects:
-                                            image_seq = list()
+                                        frame_size = None
+                                    if frame_size:
+                                        try:
+                                            frame_time = float(contents[4])
+                                        except ValueError:
+                                            frame_time = None
+                                        rects = [tuple(map(int, rect.split('x'))) for rect in contents[5].split(', ')]
+                                        if frame_time:
+                                            if rects:
+                                                image_seq = list()
 
-                                            for rect in rects:
-                                                imag = pygame.Surface(frame_size)
-                                                imag.blit(image, rect)
-                                                image_seq.append(imag)
-                                            lib_name = contents[2]
-                                            if lib_name:
+                                                for rect in rects:
+                                                    imag = pygame.Surface(frame_size)
+                                                    imag.blit(image, rect)
+                                                    image_seq.append(imag)
                                                 if len(contents) > 6:
                                                     mask = self.load_image(os.path.join(root, contents[-1]))
                                                     if mask:
@@ -132,63 +143,74 @@ class Librarian:
                                                     self.seq_library[lib_name] = image_seq, frame_time
                                                     success += 1
                                             else:
-                                                print(os.path.join(root, file), 'has wrong lib name(s)')
+                                                print(os.path.join(root, file), 'has wrong frame positions')
+                                                errors += 1
+                                        else:
+                                            print(os.path.join(root, file), 'has wrong frame time')
+                                            errors += 1
+                                    else:
+                                        print(os.path.join(root, file), 'has wrong frame size')
+                                        errors += 1
+                                else:
+                                    print(os.path.join(root, contents[1]), 'can not be loaded')
+                                    errors += 1
+                            else:
+                                print(os.path.join(root, file), 'has non-unique lib name')
+                                errors += 1
+                        elif f_type == 'image atlas':
+                            lib_name = contents[2].split(', ')
+                            keys = self.img_library.keys()
+                            lkey = True
+                            for lname in lib_name:
+                                if lname in keys:
+                                    lkey = False
+                                    break
+                            del keys
+                            if lkey and len(set(lib_name)) == len(lib_name):
+                                image = self.load_image(os.path.join(root, contents[1]), color_key=-1)
+                                if image:
+                                    try:
+                                        frame_size = tuple(map(int, contents[3].split('x')))
+                                    except ValueError:
+                                        frame_size = None
+                                    if frame_size:
+                                        rects = [tuple(map(int, rect.split('x')))
+                                                 for rect in contents[4].split(', ')]
+                                        if rects:
+                                            image_seq = list()
+
+                                            for rect in rects:
+                                                imag = pygame.Surface(frame_size)
+                                                imag.blit(image, rect)
+                                                image_seq.append(imag)
+                                            if len(lib_name) == len(image_seq):
+                                                if len(contents) > 5:
+                                                    mask = self.load_image(os.path.join(root, contents[-1]))
+                                                    if mask:
+                                                        for i in range(len(lib_name)):
+                                                            self.img_library[lib_name[i]] = image_seq[i], mask
+                                                        success += 1
+                                                    else:
+                                                        print(os.path.join(root, contents[-1]), 'can not be loaded')
+                                                        errors += 1
+                                                else:
+                                                    for i in range(len(lib_name)):
+                                                        self.img_library[lib_name[i]] = (image_seq[i])
+                                                    success += 1
+                                            else:
+                                                print(os.path.join(root, file), 'has wrong number of lib name(s)')
                                                 errors += 1
                                         else:
                                             print(os.path.join(root, file), 'has wrong frame positions')
                                             errors += 1
                                     else:
-                                        print(os.path.join(root, file), 'has wrong frame time')
+                                        print(os.path.join(root, file), 'has wrong frame size')
                                         errors += 1
                                 else:
-                                    print(os.path.join(root, file), 'has wrong frame size')
+                                    print(os.path.join(root, contents[1]), 'can not be loaded')
                                     errors += 1
                             else:
-                                print(os.path.join(root, contents[1]), 'can not be loaded')
-                                errors += 1
-                        elif f_type == 'image atlas':
-                            image = self.load_image(os.path.join(root, contents[1]), color_key=-1)
-                            if image:
-                                try:
-                                    frame_size = tuple(map(int, contents[3].split('x')))
-                                except ValueError:
-                                    frame_size = None
-                                if frame_size:
-                                    lib_name = contents[2].split(', ')
-                                    rects = [tuple(map(int, rect.split('x'))) for rect in contents[4].split(', ')]
-                                    if rects:
-                                        image_seq = list()
-
-                                        for rect in rects:
-                                            imag = pygame.Surface(frame_size)
-                                            imag.blit(image, rect)
-                                            image_seq.append(imag)
-
-                                        if len(lib_name) == len(image_seq):
-                                            if len(contents) > 5:
-                                                mask = self.load_image(os.path.join(root, contents[-1]))
-                                                if mask:
-                                                    for i in range(len(lib_name)):
-                                                        self.img_library[lib_name[i]] = image_seq[i], mask
-                                                    success += 1
-                                                else:
-                                                    print(os.path.join(root, contents[-1]), 'can not be loaded')
-                                                    errors += 1
-                                            else:
-                                                for i in range(len(lib_name)):
-                                                    self.img_library[lib_name[i]] = (image_seq[i])
-                                                success += 1
-                                        else:
-                                            print(os.path.join(root, file), 'has wrong lib name(s)')
-                                            errors += 1
-                                    else:
-                                        print(os.path.join(root, file), 'has wrong frame positions')
-                                        errors += 1
-                                else:
-                                    print(os.path.join(root, file), 'has wrong frame size')
-                                    errors += 1
-                            else:
-                                print(os.path.join(root, contents[1]), 'can not be loaded')
+                                print(os.path.join(root, file), 'has non-unique lib name(s)')
                                 errors += 1
                         else:
                             print(os.path.join(root, file), 'has wrong type')
@@ -198,8 +220,6 @@ class Librarian:
 # памятка разрабу:
 # елемент seq_library состоит из ([картинки], время кадра, иногда маска коллизии)
 # img_library выглядит проще - (картинка, +- маска)
-# А куда записывать атласы? - если несколько имён,
-# то в img_library, каждую отдельно. Если нет - seq_library (не верьте ему!)
 
 
 def load_map(name, libs: Librarian, version):
@@ -228,7 +248,7 @@ def load_map(name, libs: Librarian, version):
 
             print(prop.attrib)
     else:
-        print('Selected map not compatible with current version of program')
+        print('Selected map is not compatible with current version of program')
 
 
 class Map:

@@ -4,23 +4,6 @@ import xml.etree.ElementTree as ET
 from random import choice
 
 
-def load_image(name, color_key=None):
-    fullname = os.path.join('data', name)
-    try:
-        image = pygame.image.load(fullname).convert()
-    except pygame.error as message:
-        print('Cannot load image:', name)
-        raise SystemExit(message)
-
-    if color_key is not None:
-        if color_key == -1:
-            color_key = image.get_at((0, 0))
-        image.set_colorkey(color_key)
-    else:
-        image = image.convert_alpha()
-    return image
-
-
 class Librarian:
     def __init__(self):
         self.img_library = dict()
@@ -222,37 +205,8 @@ class Librarian:
 # img_library выглядит проще - (картинка, +- маска)
 
 
-def load_map(name, libs: Librarian, version):
-    tree = ET.parse(os.path.join('maps', name))
-    root = tree.getroot()
-    size = map(int, root.attrib['size'].split('x'))
-    static_geometry = list()
-    animated_geometry = list()
-    collision_geometry = list()
-    if version == root.attrib['version']:
-        for prop in root.find('static-geometry'):
-            if prop.attrib['lib'] == 'static':
-                img = libs.img_library.get(prop.attrib['name'], 1)
-                if img is not None:
-                    prop_position = prop.find('position')
-                    prop_position = int(prop_position.find('x').text), int(prop_position.find('y').text)
-                    static_geometry.append(StaticSprite(img, prop_position, int(prop.find('rotation').text)))
-                else:
-                    print(prop.attrib[prop.attrib['name']], 'not found in library')
-            elif prop.attrib['lib'] == 'animated':
-                img_seq = libs.seq_library.get(prop.attrib['name'], None)
-                if img_seq is not None:
-                    prop_position = prop.find('position')
-                    prop_position = int(prop_position.find('x').text), int(prop_position.find('y').text)
-                    animated_geometry.append()
-
-            print(prop.attrib)
-    else:
-        print('Selected map is not compatible with current version of program')
-
-
 class Map:
-    def __init__(self, map_size, window_size):
+    def __init__(self, map_size, window_size, angeom, stgeom, colgeom):
         self.map_size = map_size
         self.gg_spawns = [(100, 100)]
         self.orig_canvas = pygame.Surface(self.map_size)
@@ -260,8 +214,9 @@ class Map:
         self.render_canvas = self.orig_canvas
         self.bullets = Group()
         self.camera_size = window_size
-        self.static_geometry = Group(StaticSprite((200, 100), (400, 32)))
-        self.collision_geometry = [pygame.Rect((200, 100), (400, 32))]
+        self.animated_geometry = angeom
+        self.static_geometry = stgeom
+        self.collision_geometry = colgeom
         v_position = (window_size[0] // 2, window_size[1] // 2)
         self.player = Player(choice(self.gg_spawns), v_position, self.collision_geometry)
 
@@ -282,3 +237,44 @@ class Map:
         self.static_geometry.draw(self.render_canvas)
         self.render_canvas.blit(self.player.transformed_texture, self.player.transformed_position)
         self.render_canvas.blit(self.player.weapon.transformed_texture, self.player.weapon.transformed_position)
+
+
+def load_map(name, libs: Librarian, win_size, version):
+    tree = ET.parse(os.path.join('maps', name))
+    root = tree.getroot()
+    size = map(int, root.attrib['size'].split('x'))
+    static_geometry = pygame.sprite.LayeredUpdates()
+    animated_geometry = pygame.sprite.LayeredUpdates()
+    collision_geometry = list()
+    if version == root.attrib['version']:
+        for prop in root.find('static-geometry'):
+            if prop.attrib['lib'] == 'static':
+                img = libs.img_library.get(prop.attrib['name'], None)
+                if img is not None:
+                    prop_position = prop.find('position')
+                    prop_position = int(prop_position.find('x').text), int(prop_position.find('y').text)
+                    layer = prop.find('layer').text
+                    static_geometry.add(StaticSprite(img[0], prop_position, int(layer)))
+                else:
+                    print(prop.attrib['name'], 'not found in library')
+            elif prop.attrib['lib'] == 'animated':
+                img_seq = libs.seq_library.get(prop.attrib['name'], None)
+                if img_seq is not None:
+                    prop_position = prop.find('position')
+                    prop_position = int(prop_position.find('x').text), int(prop_position.find('y').text)
+                    layer = prop.find('layer').text
+                    animated_geometry.add(AnimatedSprite(img_seq[0], prop_position, img_seq[1], int(layer)))
+                else:
+                    print(prop.attrib['name'], 'not found in library')
+            else:
+                print(prop.attrib['lib'], 'not a library')
+        for rect in root.find('collision-geometry'):
+            rect_size = rect.find('size')
+            rect_size = int(rect_size.find('width').text), int(rect_size.find('height').text)
+            rect_position = rect.find('position')
+            rect_position = int(rect_position.find('x').text), int(rect_position.find('y').text)
+            collision_geometry.append(pygame.Rect(rect_position, rect_size))
+        return Map(list(size), win_size, static_geometry, animated_geometry, collision_geometry)
+    else:
+        print('Selected map is not compatible with current version of program')
+        return None

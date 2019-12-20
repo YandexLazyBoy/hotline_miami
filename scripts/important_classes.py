@@ -2,16 +2,38 @@ import pygame
 
 
 class Group(pygame.sprite.AbstractGroup):
-    def __init__(self, *sprites):
-        pygame.sprite.AbstractGroup.__init__(self)
-        self.add(*sprites)
-
     def draw(self, surface):
         sprites = self.sprites()
         surface_blit = surface.blit
         for spr in sprites:
             self.spritedict[spr] = surface_blit(spr.transformed_texture, spr.position)
         self.lostsprites = []
+
+
+class LayeredGroup(pygame.sprite.LayeredUpdates):
+    def draw(self, surface):
+        """draw all sprites in the right order onto the passed surface
+        LayeredUpdates.draw(surface): return Rect_list
+        """
+        spritedict = self.spritedict
+        surface_blit = surface.blit
+        dirty = self.lostsprites
+        self.lostsprites = []
+        dirty_append = dirty.append
+        init_rect = self._init_rect
+        for spr in self.sprites():
+            rec = spritedict[spr]
+            newrect = surface_blit(spr.transformed_texture, spr.transformed_texture.get_rect())
+            if rec is init_rect:
+                dirty_append(newrect)
+            else:
+                if newrect.colliderect(rec):
+                    dirty_append(newrect.union(rec))
+                else:
+                    dirty_append(newrect)
+                    dirty_append(rec)
+            spritedict[spr] = newrect
+        return dirty
 
 
 class Object(pygame.sprite.Sprite):

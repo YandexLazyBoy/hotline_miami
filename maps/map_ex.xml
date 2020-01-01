@@ -31,22 +31,29 @@
 			</position>
 			<rotation>0</rotation>
 		</collision-rect>
+		<collision-mask lib='animated' name='img1 seq'>
+			<position>
+				<x>0</x>
+				<y>0</y>
+			</position>
+			<rotation>0</rotation>
+		</collision-mask>
 	</collision-geometry>
 	<spawn-points>
-		<gg-spawn-point>
+		<spawn type="player spawn">
 			<position>
 				<x>0</x>
 				<y>0</y>
 			</position>
 			<rotation>0</rotation>
-		</gg-spawn-point>
-		<enemy-spawn-point id='0'>
+		</spawn>
+		<spawn type="enemy spawn" id="0">
 			<position>
 				<x>0</x>
 				<y>0</y>
 			</position>
 			<rotation>0</rotation>
-		</enemy-spawn-point>
+		</spawn>
 	</spawn-points>
 	<bonus-regions>
 		<!-- Здесь пока ничего трогать не буду -->

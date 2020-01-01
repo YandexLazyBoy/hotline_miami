@@ -2,6 +2,7 @@ from math import atan, degrees, cos, sin, radians, sqrt
 from random import randint
 from scripts.important_classes import *
 from scripts.collision import *
+from cfg.constants import *
 
 
 class StaticSprite(pygame.sprite.Sprite):
@@ -22,6 +23,7 @@ class AnimatedSprite(pygame.sprite.Sprite):
         self.frame_time = frame_time
         self.current_time = 0
         self.current_frame = 0
+        self.rect = self.transformed_texture.get_rect()
 
     def update(self, dt):
         self.current_time += dt
@@ -97,13 +99,13 @@ class Weapon(Object):
 
 
 class Player(Object):
-    def __init__(self, position, v_position, collision_geometry, angle=0):
+    def __init__(self, position, viewport_position, angle):
         texture = pygame.Surface((40, 40), pygame.SRCALPHA)
         texture.fill((255, 255, 255))
         super().__init__(position, angle, texture)
-        self.speed = 500
-        self.viewport_position = v_position
-        self.collision_geometry = collision_geometry
+        self.speed = PLAYER_SPEED
+        self.viewport_position = viewport_position
+        self.mask = None
         self.geometryToOrigin()
         self.weapon = Weapon(0, self.rotation,
                              (self.position[0] + 30, self.position[1] + 30), 5, 30, 1000, 100)
@@ -112,11 +114,12 @@ class Player(Object):
     def rotate(self, angle):
         super().rotate(angle)
         self.weapon.syncRotation(self.position, angle)
-        if self.collision_geometry:
-            self.collide_and_move()
 
+    def load_images(self, lib):
+        pass
+
+    '''
     def collide_and_move(self):
-        # Внимание - говнокод! Не лесб, оно тебя сожрёт
         dpos = (self.position[0] - self.transformed_position[0],
                 self.position[1] - self.transformed_position[1])
         x = self.weapon.position[0] - self.position[0] - 30
@@ -148,7 +151,7 @@ class Player(Object):
                     self.weapon.move((-x, 0))
                     self.transformed_position = (corect.right, self.transformed_position[1])
                     self.position = (self.transformed_position[0] + dpos[0],
-                                     self.position[1])
+                                     self.position[1])'''
 
     def move(self, vec2, seconds):
         x = self.speed * seconds * vec2[0]

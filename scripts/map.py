@@ -4,7 +4,42 @@ import xml.etree.ElementTree as ET
 from random import choice
 
 
-class Librarian:
+class SoundLibrarian:
+    def __init__(self):
+        self.music_library = list()
+        self.sound_library = list()
+
+    def load_music(self, name):
+        pass
+
+    def load_sound_library(self, lib_path):
+        success = 0
+        errors = 0
+        for root, dirs, files in os.walk(lib_path):
+            for file in files:
+                if file.endswith('.wav') or file.endswith('.ogg'):
+                    try:
+                        sound = pygame.mixer.Sound(os.path.join(root, file))
+                    except pygame.error:
+                        sound = None
+                    if sound:
+                        self.sound_library.append(sound)
+                        success += 1
+                    else:
+                        print(os.path.join(root, file), 'can not be loaded')
+                        errors += 1
+        print('\nSounds - success loadings:', str(success) + ', errors:', errors)
+
+
+class EnemyLibrarian:
+    def __init__(self):
+        self.library = list()
+
+    def load_library(self):
+        pass
+
+
+class SpriteLibrarian:
     def __init__(self):
         self.img_library = dict()
         self.seq_library = dict()
@@ -198,7 +233,7 @@ class Librarian:
                         else:
                             print(os.path.join(root, file), 'has wrong type')
                             errors += 1
-        print('\nSuccess loadings:', str(success) + ', errors:', errors)
+        print('\nSprites - success loadings:', str(success) + ', errors:', errors)
 
 # памятка разрабу:
 # елемент seq_library состоит из ([картинки], время кадра, иногда маска коллизии)
@@ -206,9 +241,9 @@ class Librarian:
 
 
 class Map:
-    def __init__(self, map_size, window_size, angeom, stgeom, colgeom):
+    def __init__(self, map_size, window_size, angeom, stgeom, colgeom, gg_spawn, angle):
         self.map_size = map_size
-        self.gg_spawns = [(100, 100)]
+        self.gg_spawn = gg_spawn
         self.orig_canvas = pygame.Surface(self.map_size)
         self.orig_canvas.fill((50, 50, 50))
         self.render_canvas = self.orig_canvas
@@ -218,16 +253,25 @@ class Map:
         self.static_geometry = stgeom
         self.collision_geometry = colgeom
         v_position = (window_size[0] // 2, window_size[1] // 2)
-        self.player = Player(choice(self.gg_spawns), v_position, self.collision_geometry)
+        self.player = Player(self.gg_spawn, v_position, angle)
 
     def checkCollision(self):
-        for bullet in self.bullets:
-            for rect in self.collision_geometry:
-                if rect.collidepoint(bullet.position):
+        for geom in self.collision_geometry:
+            for bullet in self.bullets:
+                if (geom.rect.collidepoint(bullet.position) or 0 > bullet.position[0] or
+                    bullet.position[0] > self.map_size[0] or 0 > bullet.position[1] or
+                        bullet.position[1] > self.map_size[1]):
                     bullet.kill()
-            if (0 > bullet.position[0] or bullet.position[0] > self.map_size[0] or
-                    0 > bullet.position[1] or bullet.position[1] > self.map_size[1]):
-                bullet.kill()
+
+            overlap = pygame.sprite.collide_mask(self.player, geom)
+
+            if overlap:
+
+                
+
+
+    def update(self, seconds):
+        pass
 
     def render(self, seconds):
         self.render_canvas = self.orig_canvas.copy()
@@ -239,42 +283,60 @@ class Map:
         self.render_canvas.blit(self.player.weapon.transformed_texture, self.player.weapon.transformed_position)
 
 
-def load_map(name, libs: Librarian, win_size, version):
+def get_p_fxml(prop: ET.Element):
+    prop_position = prop.find('position')
+    prop_position = int(prop_position.find('x').text), int(prop_position.find('y').text)
+    return prop_position
+
+
+def load_map(name, sprite_lib: SpriteLibrarian, sound_lib: SoundLibrarian, enemy_lib: EnemyLibrarian, win_size, version):
     tree = ET.parse(os.path.join('maps', name))
     root = tree.getroot()
     size = map(int, root.attrib['size'].split('x'))
     static_geometry = pygame.sprite.LayeredUpdates()
     animated_geometry = pygame.sprite.LayeredUpdates()
     collision_geometry = list()
+    gg_spawn = list()
+    enomies = list()
     if version == root.attrib['version']:
         for prop in root.find('static-geometry'):
-            if prop.attrib['lib'] == 'static':
-                img = libs.img_library.get(prop.attrib['name'], None)
-                if img is not None:
-                    prop_position = prop.find('position')
-                    prop_position = int(prop_position.find('x').text), int(prop_position.find('y').text)
+            img_package = sprite_lib.img_library.get(prop.attrib['name'], None)
+            if img_package:
+                if prop.attrib['lib'] == 'static':
                     layer = prop.find('layer').text
-                    static_geometry.add(StaticSprite(img[0], prop_position, int(layer)))
-                else:
-                    print(prop.attrib['name'], 'not found in library')
-            elif prop.attrib['lib'] == 'animated':
-                img_seq = libs.seq_library.get(prop.attrib['name'], None)
-                if img_seq is not None:
-                    prop_position = prop.find('position')
-                    prop_position = int(prop_position.find('x').text), int(prop_position.find('y').text)
+                    static_geometry.add(StaticSprite(img_package[0], get_p_fxml(prop), int(layer)))
+                elif prop.attrib['lib'] == 'animated':
                     layer = prop.find('layer').text
-                    animated_geometry.add(AnimatedSprite(img_seq[0], prop_position, img_seq[1], int(layer)))
+                    animated_geometry.add(AnimatedSprite(img_package[0], get_p_fxml(prop), img_package[1], int(layer)))
                 else:
-                    print(prop.attrib['name'], 'not found in library')
+                    print(prop.attrib['lib'], 'is not a library')
             else:
-                print(prop.attrib['lib'], 'not a library')
-        for rect in root.find('collision-geometry'):
-            rect_size = rect.find('size')
-            rect_size = int(rect_size.find('width').text), int(rect_size.find('height').text)
-            rect_position = rect.find('position')
-            rect_position = int(rect_position.find('x').text), int(rect_position.find('y').text)
-            collision_geometry.append(pygame.Rect(rect_position, rect_size))
-        return Map(list(size), win_size, static_geometry, animated_geometry, collision_geometry)
+                print(prop.attrib['name'], 'was not found in libraries')
+
+        for geom in root.find('collision-geometry'):
+            if geom.tag == 'collision-rect':
+                rect_size = geom.find('size')
+                rect_size = int(rect_size.find('width').text), int(rect_size.find('height').text)
+                collision_geometry.append(ColGeom(pygame.mask.Mask(rect_size), get_p_fxml(geom)))
+            elif geom.tag == 'collision-mask':
+                if geom.attrib['lib'] == 'static':
+                    collision_geometry.append(pygame.mask.from_surface(sprite_lib.img_library[geom.attrib['name']][-1]))
+                elif geom.attrib['lib'] == 'animated':
+                    collision_geometry.append(pygame.mask.from_surface(sprite_lib.seq_library[geom.attrib['name']][-1]))
+
+        for spawn in root.find('spawn-points'):
+            pos = get_p_fxml(spawn)
+            rot = int(spawn.find('rotation').text)
+            if spawn.attrib['type'] == 'player spawn':
+                gg_spawn.append((pos, rot))
+            elif spawn.attrib['type'] == 'enemy spawn':
+                # TODO срочно классы бандитов мне накидали!
+                enomies.append(enemy_lib.library[int(spawn.attrib('id'))](pos, rot))
+            else:
+                print(spawn.attrib['type'], 'is not a type of spawn points')
+        gg_spawn = choice(gg_spawn)
+        return Map(list(size), win_size, animated_geometry, static_geometry,
+                   collision_geometry, gg_spawn[0], gg_spawn[1])
     else:
-        print('Selected map is not compatible with current version of program')
+        print('Selected map is not compatible with the current version of program')
         return None

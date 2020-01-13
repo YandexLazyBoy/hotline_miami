@@ -1,5 +1,0 @@
-type: image atlas
-Filename: achievements.png
-Lib name: achievement0, achievement1, achievement2, achievement3, achievement4, achievement5
-Frame size: 64x64
-Frame positions: 0x0, 0x65, 0x130, 0x195, 0x260, 0x325

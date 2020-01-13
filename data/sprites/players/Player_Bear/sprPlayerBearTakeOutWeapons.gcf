@@ -1,0 +1,6 @@
+Type: sequence atlas
+Filename: sprPlayerBearTakeOutWeapons.png
+Lib name: sprPlayerBearTakeOutWeapons
+Frame size: 36x32
+Frame time: 0.05
+Frame positions: 0x0, 36x0, 72x0, 108x0, 144x0, 180x0, 216x0, 252x0

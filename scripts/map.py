@@ -2,6 +2,7 @@ from scripts.game_objects import *
 import os
 import xml.etree.ElementTree as ET
 from random import choice
+from pygame.transform import scale
 
 
 class SoundLibrarian:
@@ -49,16 +50,15 @@ class SpriteLibrarian:
             image = pygame.image.load(name)
         except pygame.error:
             return None
-
         if color_key is not None:
             if color_key == -1:
                 color_key = image.get_at((0, 0))
             image.set_colorkey(color_key)
         else:
             image = image.convert_alpha()
-        return image
+        return scale(image, (image.get_width() * 4, image.get_height() * 4))
 
-    def load_library(self, lib_path):  # TODO снести всё к хренам и построить нормально
+    def load_library(self, lib_path):
         success = 0
         errors = 0
         for root, dirs, files in os.walk(lib_path):
@@ -82,7 +82,7 @@ class SpriteLibrarian:
                                             print(os.path.join(root, contents[-1]), 'can not be loaded')
                                             errors += 1
                                     else:
-                                        self.img_library[lib_name] = tuple(image)
+                                        self.img_library[lib_name] = (image, )
                                         success += 1
                                 else:
                                     print(os.path.join(root, contents[1]), 'can not be loaded')
@@ -141,13 +141,13 @@ class SpriteLibrarian:
                                         except ValueError:
                                             frame_time = None
                                         rects = [tuple(map(int, rect.split('x'))) for rect in contents[5].split(', ')]
-                                        if frame_time:
+                                        if frame_time is not None:
                                             if rects:
                                                 image_seq = list()
 
                                                 for rect in rects:
-                                                    imag = pygame.Surface(frame_size)
-                                                    imag.blit(image, rect)
+                                                    imag = pygame.Surface((frame_size[0] * 4, frame_size[1] * 4))
+                                                    imag.blit(image, (rect[0] * 4, rect[1] * 4))
                                                     image_seq.append(imag)
                                                 if len(contents) > 6:
                                                     mask = self.load_image(os.path.join(root, contents[-1]))
@@ -266,9 +266,44 @@ class Map:
             overlap = pygame.sprite.collide_mask(self.player, geom)
 
             if overlap:
+                overlap = maskcollide(self.player, geom)
+                overlap_rect = overlap.get_bounding_rects()[0]
+                overlist = [(self.player.rect.x + point[0], self.player.rect.y + point[1]) for point in
+                            overlap.outline(PHYSICS_QUALITY)]
+                min_point = min(overlist,
+                                key=lambda x: sqrt((x[0] - self.player.center[0]) ** 2 +
+                                                   (x[1] - self.player.center[1]) ** 2))
+                indexes = list()
 
-                
+                # ---------------------This can be deleted to speed up collision-------------------------
+                olist1 = [(self.player.rect.x + point[0],
+                           self.player.rect.y + point[1]) for point in self.player.mask.outline(PHYSICS_QUALITY)]
+                olist2 = [(geom.rect.x + point[0],
+                           geom.rect.y + point[1]) for point in geom.mask.outline(PHYSICS_QUALITY)]
 
+                for i in range(len(overlist)):
+                    if overlist[i] in olist2 and overlist[i] not in olist1:
+                        indexes.append(i)
+
+                for index in sorted(indexes, reverse=True):
+                    del overlist[index]
+                # ---------------------------------------------------------------------------------------
+
+                cf = abs(zerodiv(self.player.center[0] - min_point[0], self.player.center[1] - min_point[1]))
+                max_point = min(overlist, key=lambda x: abs(cf - abs(zerodiv(self.player.center[0] - x[0],
+                                                                             self.player.center[1] - x[1]))))
+                if abs(max_point[0] - min_point[0]) > PHYSICS_QUALITY or abs(
+                        max_point[1] - min_point[1]) > PHYSICS_QUALITY:
+                    offsetx = min_point[0] - max_point[0]
+                    offsety = min_point[1] - max_point[1]
+                    if offsetx < 0:
+                        self.player.teleport((offsetx + 1, 0))
+                    else:
+                        self.player.teleport((offsetx - 1, 0))
+                    if offsety < 0:
+                        self.player.teleport((0, offsety + 1))
+                    else:
+                        self.player.teleport((0, offsety - 1))
 
     def update(self, seconds):
         pass

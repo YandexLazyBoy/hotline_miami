@@ -2,7 +2,7 @@ from math import atan, degrees, cos, sin, radians, sqrt
 from random import randint
 from scripts.important_classes import *
 from scripts.collision import *
-from cfg.constants import *
+from data.classes.constants import *
 
 
 class StaticSprite(pygame.sprite.Sprite):
@@ -109,54 +109,22 @@ class Player(Object):
         self.geometryToOrigin()
         self.weapon = Weapon(0, self.rotation,
                              (self.position[0] + 30, self.position[1] + 30), 5, 30, 1000, 100)
-        self.vector = (0, 0)
 
     def rotate(self, angle):
         super().rotate(angle)
         self.weapon.syncRotation(self.position, angle)
 
-    def load_images(self, lib):
-        pass
+'''    def load_images(self, sprite_lib, **kwargs):
+        default_names = [
+            '': ''
+        ]
 
-    '''
-    def collide_and_move(self):
-        dpos = (self.position[0] - self.transformed_position[0],
-                self.position[1] - self.transformed_position[1])
-        x = self.weapon.position[0] - self.position[0] - 30
-        y = self.weapon.position[1] - self.position[1] - 30
-        for corect in self.collision_geometry:
-            if self.rect.colliderect(corect):
-                if self.vector[1] > 0:
-                    self.weapon.move((0, -y))
-                    self.transformed_position = (self.transformed_position[0],
-                                                 corect.top - self.rect.size[1] + 1)
-                    self.position = (self.position[0],
-                                     self.transformed_position[1] + dpos[1])
-
-                if self.vector[1] < 0:
-                    self.weapon.move((0, -y))
-                    self.transformed_position = (self.transformed_position[0],
-                                                 corect.bottom)
-                    self.position = (self.position[0],
-                                     self.transformed_position[1] + dpos[1])
-
-                if self.vector[0] > 0:
-                    self.weapon.move((-x, 0))
-                    self.transformed_position = (corect.left - self.rect.size[0] + 1,
-                                                 self.transformed_position[1])
-                    self.position = (self.transformed_position[0] - dpos[0],
-                                     self.position[1])
-
-                if self.vector[0] < 0:
-                    self.weapon.move((-x, 0))
-                    self.transformed_position = (corect.right, self.transformed_position[1])
-                    self.position = (self.transformed_position[0] + dpos[0],
-                                     self.position[1])'''
+    def teleport(self, vec2):
+        self.position = (self.position[0] + vec2, self.position[1] + y)
 
     def move(self, vec2, seconds):
         x = self.speed * seconds * vec2[0]
         y = self.speed * seconds * vec2[1]
-        self.vector = vec2
         self.position = (self.position[0] + x, self.position[1] + y)
         self.weapon.move((x, y))
         self.rotate(self.rotation)
@@ -184,5 +152,7 @@ class Player(Object):
         # ------Собсна, поворачиваем перса------
         self.rotate(angle)
 
+
     def shoot(self, add):
         add(self.weapon.generateBullet())
+'''

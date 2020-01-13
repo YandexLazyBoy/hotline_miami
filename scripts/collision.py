@@ -1,8 +1,12 @@
 class ColGeom:
     def __init__(self, mask, position):
         self.mask = mask
-        self.rect = mask.get_rect
-        self.rect.move_ip(position[0], position[1])
+        self.rect = mask.get_bounding_rects()[0]
+        self.move(position)
+
+    def move(self, pos):
+        self.rect = self.rect.move(pos[0], pos[1])
+        self.center = self.rect.x + self.rect.width // 2, self.rect.y + self.rect.height // 2
 
 
 def rectcollide(rect, *group):

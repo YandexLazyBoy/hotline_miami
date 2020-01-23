@@ -1,5 +1,6 @@
 from data.classes.weapons import *
-from pygame import quit
+from pygame.mask import from_surface
+
 
 class AnimSeq:
     def __init__(self, seq, frame_time):
@@ -9,6 +10,7 @@ class AnimSeq:
         self.loop_flag = False
         self.current_time = 0
         self.current_frame = 0
+        self.rotation = 0
 
     def reset(self):
         self.image = self.frames[0]
@@ -23,22 +25,32 @@ class AnimSeq:
             if len(self.frames) - 1 <= self.current_frame:
                 self.current_frame = 0
                 self.loop_flag = True
-            self.image = self.frames[self.current_frame]
             self.current_time -= self.frame_time
+
+        self.image = self.frames[self.current_frame]
+        if self.rotation:
+            rotate(self.image, 360 - self.rotation)
 
 
 class PlayerBear:
-    def __init__(self, sound_lib, sprite_lib):
-        self.mask = None
+    def __init__(self, sound_lib, sprite_lib, spawn, rotation, err_func):
         self.lib = dict()
         if self.load_data(sound_lib, sprite_lib):
             print('Class "PlayerBear" could not load data')
-            quit()
+            err_func()
+        self.mask = from_surface(self.lib['mask'])
+        self.shoot = print
         self.current_weapon = BearGuns(self.lib['bullet'][0], self.lib['arm'])
-        self.current_animation = None
-        self.image = None
-        self.rotation = 0
-        self.rect = None
+        self.current_animation = self.lib['walkUnarmed']
+        self.legs = self.lib['legs']
+        self.image = rotate(self.legs.image, 90 - rotation)
+        self.rotation = rotation
+        self.center = spawn
+        self.rect = self.image.get_rect()
+
+    def setup_shooting(self, shoot_func):
+        self.shoot = shoot_func
+        self.current_weapon.shoot = self.shoot
 
     def load_sprite(self, lib, source, target, animdata=False):
         spr = lib.get(source, None)
@@ -52,6 +64,10 @@ class PlayerBear:
         else:
             print('Cannot load', source)
             return 1
+
+    def update_rect(self):
+        self.rect = self.image.get_rect()
+        self.rect.move_ip(self.center[0] - self.rect.width // 2, self.center[1] - self.rect.height // 2)
 
     def load_data(self, sound, spritelib):
         err = self.load_sprite(spritelib.seq_library, 'sprBearWalkUnarmed', 'walkUnarmed', animdata=True)
@@ -98,29 +114,63 @@ class PlayerBear:
         # err += self.load_sprite(spritelib.seq_library, 'sprBearKillPipe', 'killPipe', animdata=True)
         err += self.load_sprite(spritelib.seq_library, 'sprBearLegs', 'legs', animdata=True)
         err += self.load_sprite(spritelib.img_library, 'sprBulletLSD', 'bullet')
+        err += self.load_sprite(spritelib.img_library, 'sprBearCollisionMask', 'mask')
         return err
+
+    def teleport(self, pos):
+        self.center = self.center[0] + pos[0], self.center[1] + pos[1]
 
     def set_weapon(self, name):
         if name == 'BearGuns':
-            self.current_animation = self.lib['takeOutWeapons']
-            self.current_weapon = BearGuns(self.lib['bullet'][0], self.lib['arm'])
-
+            self.current_weapon = BearGuns(self.lib['bullet'][0], self.lib['arm'], self.shoot)
         else:
-            print('Error: Unknown name of gun -' + name)
+            print('Error: Unknown name of gun -', name)
 
     def take_out_guns(self):
-        self.current_animation = self.lib['takeOutWeapons']
+        self.current_animation = self.lib['takeOutWeapons']  # 0 - тело, 1 - вся фигура
+        self.current_weapon = BearGuns(self.lib['bullet'][0], self.lib['arm'], self.shoot)
 
     def update(self, mouse_pos, dt):
         if self.current_animation.loop_flag is False:
-            if type(self.current_weapon) == 'BearGuns':
-                self.current_weapon.update(self.rotation, self.rect, mouse_pos)
-                self.image = self.lib['walkSpecial'][0][0]
-            else:
-                self.current_weapon.update(self.rotation)
+            self.current_weapon.update(self.rotation, self.center, mouse_pos)
+
+            r1 = self.current_weapon.image.get_rect()
+            r2 = self.legs.image.get_rect()
+            rect = r1.union(r2)
+            self.image = Surface((rect.width, rect.height))
+            self.image.blit(self.legs.image, ((rect.width - r2.width) // 2, (rect.height - r2.height) // 2))
+            self.image.blit(self.current_weapon.image, ((rect.width - r1.width) // 2, (rect.height - r1.height) // 2))
         else:
-            self.image =
+            self.current_animation.update(dt)
 
-    def move(self, vec):
-        if type(self.current_weapon) != 'BearGuns':
+            r1 = self.current_animation.image.get_rect()
+            r2 = self.legs.image.get_rect()
+            rect = r1.union(r2)
+            self.image = Surface((rect.width, rect.height))
+            self.image.blit(self.legs.image, ((rect.width - r2.width) // 2, (rect.height - r2.height) // 2))
+            self.image.blit(self.current_weapon.image, ((rect.width - r1.width) // 2, (rect.height - r1.height) // 2))
 
+        self.update_rect()
+
+    def move(self, vec, dt):
+        self.center = self.center[0] + PLAYER_SPEED * vec[0] * dt, self.center[1] + PLAYER_SPEED * vec[1] * dt
+        if vec == (0, 1):
+            self.legs.rotation = 0
+        elif vec == (1, 1):
+            self.legs.rotation = 45
+        elif vec == (1, 0):
+            self.legs.rotation = 90
+        elif vec == (-1, 1):
+            self.legs.rotation = 135
+        elif vec == (-1, 0):
+            self.legs.rotation = 180
+        elif vec == (-1, -1):
+            self.legs.rotation = 225
+        elif vec == (0, -1):
+            self.legs.rotation = 270
+        elif vec == (1, -1):
+            self.legs.rotation = 315
+        self.legs.update(dt)
+
+
+PlayersDB = [PlayerBear]

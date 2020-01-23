@@ -32,14 +32,6 @@ class SoundLibrarian:
         print('\nSounds - success loadings:', str(success) + ', errors:', errors)
 
 
-class EnemyLibrarian:
-    def __init__(self):
-        self.library = list()
-
-    def load_library(self):
-        pass
-
-
 class SpriteLibrarian:
     def __init__(self):
         self.img_library = dict()
@@ -58,7 +50,7 @@ class SpriteLibrarian:
             image = image.convert_alpha()
         return scale(image, (image.get_width() * 4, image.get_height() * 4))
 
-    def load_library(self, lib_path):
+    def load_library(self, lib_path, err_func):
         success = 0
         errors = 0
         for root, dirs, files in os.walk(lib_path):
@@ -234,6 +226,8 @@ class SpriteLibrarian:
                             print(os.path.join(root, file), 'has wrong type')
                             errors += 1
         print('\nSprites - success loadings:', str(success) + ', errors:', errors)
+        if errors:
+            err_func()
 
 # памятка разрабу:
 # елемент seq_library состоит из ([картинки], время кадра, иногда маска коллизии)
@@ -241,9 +235,8 @@ class SpriteLibrarian:
 
 
 class Map:
-    def __init__(self, map_size, window_size, angeom, stgeom, colgeom, gg_spawn, angle):
+    def __init__(self, map_size, window_size, angeom, stgeom, colgeom, player):
         self.map_size = map_size
-        self.gg_spawn = gg_spawn
         self.orig_canvas = pygame.Surface(self.map_size)
         self.orig_canvas.fill((50, 50, 50))
         self.render_canvas = self.orig_canvas
@@ -252,8 +245,9 @@ class Map:
         self.animated_geometry = angeom
         self.static_geometry = stgeom
         self.collision_geometry = colgeom
-        v_position = (window_size[0] // 2, window_size[1] // 2)
-        self.player = Player(self.gg_spawn, v_position, angle)
+        self.v_position = (window_size[0] // 2, window_size[1] // 2)
+        self.player = player
+        self.player.setup_shooting(self.bullets.add)
 
     def checkCollision(self):
         for geom in self.collision_geometry:
@@ -268,6 +262,7 @@ class Map:
             if overlap:
                 overlap = maskcollide(self.player, geom)
                 overlap_rect = overlap.get_bounding_rects()[0]
+
                 overlist = [(self.player.rect.x + point[0], self.player.rect.y + point[1]) for point in
                             overlap.outline(PHYSICS_QUALITY)]
                 min_point = min(overlist,
@@ -287,7 +282,7 @@ class Map:
 
                 for index in sorted(indexes, reverse=True):
                     del overlist[index]
-                # ---------------------------------------------------------------------------------------
+                # ----------------------------------------------------------------------------------------
 
                 cf = abs(zerodiv(self.player.center[0] - min_point[0], self.player.center[1] - min_point[1]))
                 max_point = min(overlist, key=lambda x: abs(cf - abs(zerodiv(self.player.center[0] - x[0],
@@ -305,17 +300,18 @@ class Map:
                     else:
                         self.player.teleport((0, offsety - 1))
 
-    def update(self, seconds):
-        pass
+    def update(self, dt, mouse_pos):
+        self.player.update(mouse_pos, dt)
+        self.animated_geometry.update(dt)
+        self.bullets.update(dt)
+        self.checkCollision()
 
-    def render(self, seconds):
+    def render(self):
         self.render_canvas = self.orig_canvas.copy()
-        self.bullets.update(seconds)
         self.checkCollision()
         self.bullets.draw(self.render_canvas)
         self.static_geometry.draw(self.render_canvas)
-        self.render_canvas.blit(self.player.transformed_texture, self.player.transformed_position)
-        self.render_canvas.blit(self.player.weapon.transformed_texture, self.player.weapon.transformed_position)
+        self.render_canvas.blit(self.player.image, self.player.center)
 
 
 def get_p_fxml(prop: ET.Element):
@@ -324,15 +320,14 @@ def get_p_fxml(prop: ET.Element):
     return prop_position
 
 
-def load_map(name, sprite_lib: SpriteLibrarian, sound_lib: SoundLibrarian, enemy_lib: EnemyLibrarian, win_size, version):
+def load_map(name, sprite_lib, sound_lib, win_size, version, err_func):
     tree = ET.parse(os.path.join('maps', name))
     root = tree.getroot()
     size = map(int, root.attrib['size'].split('x'))
     static_geometry = pygame.sprite.LayeredUpdates()
     animated_geometry = pygame.sprite.LayeredUpdates()
     collision_geometry = list()
-    gg_spawn = list()
-    enomies = list()
+    gg = list()
     if version == root.attrib['version']:
         for prop in root.find('static-geometry'):
             img_package = sprite_lib.img_library.get(prop.attrib['name'], None)
@@ -363,15 +358,15 @@ def load_map(name, sprite_lib: SpriteLibrarian, sound_lib: SoundLibrarian, enemy
             pos = get_p_fxml(spawn)
             rot = int(spawn.find('rotation').text)
             if spawn.attrib['type'] == 'player spawn':
-                gg_spawn.append((pos, rot))
+                gg.append(PlayersDB[int(spawn.attrib['id'])](sound_lib, sprite_lib, pos, rot, err_func))
             elif spawn.attrib['type'] == 'enemy spawn':
+                print('Oops...')
                 # TODO срочно классы бандитов мне накидали!
-                enomies.append(enemy_lib.library[int(spawn.attrib('id'))](pos, rot))
             else:
                 print(spawn.attrib['type'], 'is not a type of spawn points')
-        gg_spawn = choice(gg_spawn)
+        gg = choice(gg)
         return Map(list(size), win_size, animated_geometry, static_geometry,
-                   collision_geometry, gg_spawn[0], gg_spawn[1])
+                   collision_geometry, gg)
     else:
         print('Selected map is not compatible with the current version of program')
         return None

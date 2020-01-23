@@ -1,8 +1,7 @@
-from math import atan, degrees, cos, sin, radians, sqrt
-from random import randint
+from math import sqrt
 from scripts.important_classes import *
+from data.classes.players import *
 from scripts.collision import *
-from data.classes.constants import *
 
 
 class StaticSprite(pygame.sprite.Sprite):
@@ -34,7 +33,7 @@ class AnimatedSprite(pygame.sprite.Sprite):
             self.transformed_texture = self.frames[self.current_frame]
             self.current_time -= self.frame_time
 
-
+'''
 class Bullet(Object):
     def __init__(self, velocity, source_id, spawn, rotation, damage=100):
         texture = pygame.Surface((10, 10), pygame.SRCALPHA)
@@ -114,7 +113,7 @@ class Player(Object):
         super().rotate(angle)
         self.weapon.syncRotation(self.position, angle)
 
-'''    def load_images(self, sprite_lib, **kwargs):
+    def load_images(self, sprite_lib, **kwargs):
         default_names = [
             '': ''
         ]

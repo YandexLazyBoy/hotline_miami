@@ -3,7 +3,8 @@ from pygame import Surface
 from pygame.transform import rotate, flip
 from pygame.draw import circle
 from math import radians, sin, cos, atan2, degrees
-from data.classes.constants import BULLET_SPEED
+from data.classes.constants import *
+from random import randint
 
 
 class Bullet(Sprite):
@@ -29,11 +30,9 @@ class BearGuns:
         self.rotation_left = 0
         self.pos_left = 0, 0
         self.pos_right = 0, 0
-        self.mt = Surface((336, 164))
+        self.image = Surface((336, 164))
         self.shoot_time = 0
-
-    def take_out(self):
-        pass
+        self.shoot = print
 
     def update(self, angle, player_pos, mouse_pos):
         pp1 = sin(radians(-angle)) * 36, cos(radians(angle)) * -36
@@ -52,20 +51,24 @@ class BearGuns:
         self.pos_right = (int(pp2[0] + sin(radians(self.rotation_right)) * 120.0666),
                           int(pp2[1] + cos(radians(self.rotation_right)) * -120.0666))
 
-        pp1 = (pp1[0] - player_pos[0] + self.mt.get_width() // 2, pp1[1] - player_pos[1] + self.mt.get_width() // 2)
-        pp2 = (pp2[0] - player_pos[0] + self.mt.get_width() // 2, pp2[1] - player_pos[1] + self.mt.get_width() // 2)
+        pp1 = (pp1[0] - player_pos[0] + self.image.get_width() // 2,
+               pp1[1] - player_pos[1] + self.image.get_width() // 2)
+        pp2 = (pp2[0] - player_pos[0] + self.image.get_width() // 2,
+               pp2[1] - player_pos[1] + self.image.get_width() // 2)
 
         rt1 = rotate(flip(self.arm_textures[0], True, True), 270 - ang1)
         rt2 = rotate(flip(self.arm_textures[0], True, False), 270 - ang2)
 
-        self.mt = rotate(Surface((336, 164)), 360 - angle)
-        self.mt.set_colorkey((0, 0, 0))
+        self.image = rotate(Surface((336, 164)), 360 - angle)
+        self.image.set_colorkey((0, 0, 0))
 
         ps1 = int(56.5685 * cos(radians(ang1 + 90 - 8.1301))), int(56.5685 * sin(radians(ang1 + 90 - 8.1301)))
         ps2 = int(56.5685 * cos(radians(ang2 + 98.1301))), int(56.5685 * sin(radians(ang2 + 98.1301)))
 
-        self.mt.blit(rt1, (pp1[0] - rt1.get_width() // 2 - ps1[0], pp1[1] - rt1.get_height() // 2 - ps1[1]))
-        self.mt.blit(rt2, (pp2[0] - rt2.get_width() // 2 - ps2[0], pp2[1] - rt2.get_height() // 2 - ps2[1]))
+        self.image.blit(rt1, (pp1[0] - rt1.get_width() // 2 - ps1[0],
+                              pp1[1] - rt1.get_height() // 2 - ps1[1]))
+        self.image.blit(rt2, (pp2[0] - rt2.get_width() // 2 - ps2[0],
+                              pp2[1] - rt2.get_height() // 2 - ps2[1]))
 
     def shoot(self):
         if self.shoot_time > 0:
@@ -75,8 +78,8 @@ class BearGuns:
                     return None
                 else:
                     self.magazine -= 2
-                    return (Bullet(self.bullet_texture, self.pos_left, self.rotation_left),
-                            Bullet(self.bullet_texture, self.pos_right, self.rotation_right))
+                    self.shoot(Bullet(self.bullet_texture, self.pos_left, self.rotation_left))
+                    self.shoot(Bullet(self.bullet_texture, self.pos_right, self.rotation_right))
             else:
                 print('There is nothing in magazine')
             return None

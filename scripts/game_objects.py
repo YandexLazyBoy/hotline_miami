@@ -7,22 +7,23 @@ from scripts.collision import *
 class StaticSprite(pygame.sprite.Sprite):
     def __init__(self, img, position, layer):
         super().__init__()
-        self.transformed_texture = img
-        self.position = position
+        self.image = img
+        self.rect = img.get_rect()
+        self.rect.move_ip(position)
         self._layer = layer
 
 
 class AnimatedSprite(pygame.sprite.Sprite):
     def __init__(self, img_seq, position, frame_time, layer):
         super().__init__()
-        self.transformed_texture = img_seq[0]
+        self.image = img_seq[0]
         self.position = position
         self.frames = img_seq
         self._layer = layer
         self.frame_time = frame_time
         self.current_time = 0
         self.current_frame = 0
-        self.rect = self.transformed_texture.get_rect()
+        self.rect = self.image.get_rect()
 
     def update(self, dt):
         self.current_time += dt
@@ -30,7 +31,7 @@ class AnimatedSprite(pygame.sprite.Sprite):
             self.current_frame += 1
             if len(self.frames) - 1 <= self.current_frame:
                 self.current_frame = 0
-            self.transformed_texture = self.frames[self.current_frame]
+            self.image = self.frames[self.current_frame]
             self.current_time -= self.frame_time
 
 '''

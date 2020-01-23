@@ -56,8 +56,8 @@ class BearGuns:
         pp2 = (pp2[0] - player_pos[0] + self.image.get_width() // 2,
                pp2[1] - player_pos[1] + self.image.get_width() // 2)
 
-        rt1 = rotate(flip(self.arm_textures[0], True, True), 270 - ang1)
-        rt2 = rotate(flip(self.arm_textures[0], True, False), 270 - ang2)
+        rt1 = rotate(flip(self.arm_textures, True, True), 270 - ang1)
+        rt2 = rotate(flip(self.arm_textures, True, False), 270 - ang2)
 
         self.image = rotate(Surface((336, 164)), 360 - angle)
         self.image.set_colorkey((0, 0, 0))

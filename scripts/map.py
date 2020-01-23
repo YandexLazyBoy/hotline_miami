@@ -321,7 +321,7 @@ def get_p_fxml(prop: ET.Element):
 
 
 def load_map(name, sprite_lib, sound_lib, win_size, version, err_func):
-    tree = ET.parse(os.path.join('maps', name))
+    tree = ET.parse(os.path.join('data', name))
     root = tree.getroot()
     size = map(int, root.attrib['size'].split('x'))
     static_geometry = pygame.sprite.LayeredUpdates()
@@ -347,7 +347,9 @@ def load_map(name, sprite_lib, sound_lib, win_size, version, err_func):
             if geom.tag == 'collision-rect':
                 rect_size = geom.find('size')
                 rect_size = int(rect_size.find('width').text), int(rect_size.find('height').text)
-                collision_geometry.append(ColGeom(pygame.mask.Mask(rect_size), get_p_fxml(geom)))
+                mask = pygame.mask.Mask(rect_size)
+                mask.fill()
+                collision_geometry.append(ColGeom(mask, get_p_fxml(geom)))
             elif geom.tag == 'collision-mask':
                 if geom.attrib['lib'] == 'static':
                     collision_geometry.append(pygame.mask.from_surface(sprite_lib.img_library[geom.attrib['name']][-1]))

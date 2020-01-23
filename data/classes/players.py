@@ -38,10 +38,10 @@ class PlayerBear:
         if self.load_data(sound_lib, sprite_lib):
             print('Class "PlayerBear" could not load data')
             err_func()
-        self.mask = from_surface(self.lib['mask'])
+        self.mask = from_surface(self.lib['mask'][0])
         self.shoot = print
         self.current_weapon = BearGuns(self.lib['bullet'][0], self.lib['arm'])
-        self.current_animation = self.lib['walkUnarmed']
+        self.current_animation = AnimSeq([1], 0.05)
         self.legs = self.lib['legs']
         self.image = rotate(self.legs.image, 90 - rotation)
         self.rotation = rotation
@@ -70,13 +70,14 @@ class PlayerBear:
         self.rect.move_ip(self.center[0] - self.rect.width // 2, self.center[1] - self.rect.height // 2)
 
     def load_data(self, sound, spritelib):
+        print(spritelib.img_library)
         err = self.load_sprite(spritelib.seq_library, 'sprBearWalkUnarmed', 'walkUnarmed', animdata=True)
         err += self.load_sprite(spritelib.seq_library, 'sprBearWalkUnarmedBack', 'walkUnarmedBack', animdata=True)
         err += self.load_sprite(spritelib.seq_library, 'sprBearWalkBat', 'walkBat', animdata=True)
         err += self.load_sprite(spritelib.seq_library, 'sprBearWalkChain', 'walkChain', animdata=True)
         err += self.load_sprite(spritelib.seq_library, 'sprBearWalkClub', 'walkClub', animdata=True)
         err += self.load_sprite(spritelib.seq_library, 'sprBearWalkKnife', 'walkKnife', animdata=True)
-        err += self.load_sprite(spritelib.seq_library, 'sprBearWalkPipe', 'walkPipe', animdata=True)
+        err += self.load_sprite(spritelib.seq_library, 'sprBearPipe', 'walkPipe', animdata=True)
         err += self.load_sprite(spritelib.seq_library, 'sprBearWalk9mm', 'walk9mm', animdata=True)
         err += self.load_sprite(spritelib.seq_library, 'sprBearWalkKalashnikov', 'walkKalashnikov', animdata=True)
         err += self.load_sprite(spritelib.seq_library, 'sprBearWalkM16', 'walkM16', animdata=True)
@@ -87,7 +88,7 @@ class PlayerBear:
         # err += self.load_sprite(spritelib.seq_library, 'sprBearTurnSpecial', 'turnSpecial', animdata=True)
         err += self.load_sprite(spritelib.seq_library, 'sprBearWalkUzi', 'walkUzi', animdata=True)
         # err += self.load_sprite(spritelib.seq_library, 'sprBearWalkPizza', 'walkPizza')
-        err += self.load_sprite(spritelib.seq_library, 'sprBearArm', 'arm')
+        err += self.load_sprite(spritelib.img_library, 'sprBearArm', 'arm')
         err += self.load_sprite(spritelib.seq_library, 'sprBearAttackPunch', 'attackPunch', animdata=True)
         err += self.load_sprite(spritelib.seq_library, 'sprBearAttackBat', 'attackBat', animdata=True)
         err += self.load_sprite(spritelib.seq_library, 'sprBearAttackChain', 'attackChain', animdata=True)
@@ -112,9 +113,9 @@ class PlayerBear:
         # err += self.load_sprite(spritelib.seq_library, 'sprBearKillClub', 'killClub', animdata=True)
         # err += self.load_sprite(spritelib.seq_library, 'sprBearKillKnife', 'killKnife', animdata=True)
         # err += self.load_sprite(spritelib.seq_library, 'sprBearKillPipe', 'killPipe', animdata=True)
-        err += self.load_sprite(spritelib.seq_library, 'sprBearLegs', 'legs', animdata=True)
+        err += self.load_sprite(spritelib.seq_library, 'sprPlayerBearLegs', 'legs', animdata=True)
         err += self.load_sprite(spritelib.img_library, 'sprBulletLSD', 'bullet')
-        err += self.load_sprite(spritelib.img_library, 'sprBearCollisionMask', 'mask')
+        err += self.load_sprite(spritelib.img_library, 'sprPlayerBearCollisionMask', 'mask')
         return err
 
     def teleport(self, pos):
@@ -122,13 +123,15 @@ class PlayerBear:
 
     def set_weapon(self, name):
         if name == 'BearGuns':
-            self.current_weapon = BearGuns(self.lib['bullet'][0], self.lib['arm'], self.shoot)
+            self.current_weapon = BearGuns(self.lib['bullet'][0], self.lib['arm'])
         else:
             print('Error: Unknown name of gun -', name)
+        self.current_weapon.shoot = self.shoot
 
     def take_out_guns(self):
         self.current_animation = self.lib['takeOutWeapons']  # 0 - тело, 1 - вся фигура
-        self.current_weapon = BearGuns(self.lib['bullet'][0], self.lib['arm'], self.shoot)
+        self.current_weapon = BearGuns(self.lib['bullet'][0], self.lib['arm'])
+        self.current_weapon.shoot = self.shoot
 
     def update(self, mouse_pos, dt):
         if self.current_animation.loop_flag is False:

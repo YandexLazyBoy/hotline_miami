@@ -1,5 +1,6 @@
-Type: image atlas
+Type: sequence atlas
 Filename: atlPlayerBearArm.png
-Lib name: sprBearArm, sprPlayerBearArm1
+Lib name: sprPlayerBearArm
 Frame size: 38x12
+Frame time: 0
 Frame positions: 0x0, 38x0

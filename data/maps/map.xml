@@ -4,13 +4,6 @@
 		<music volume='50'>Sunset</music>
 	</background>
 	<static-geometry>
-		<prop lib='animated' name='img1 seq'>
-			<position>
-				<x>3</x>
-				<y>2</y>
-			</position>
-			<layer>0</layer>
-		</prop>
 		<prop lib='static' name='sprWoodWallInteriorH'>
 			<position>
 				<x>1</x>
@@ -31,13 +24,6 @@
 			</position>
 			<rotation>0</rotation>
 		</collision-rect>
-		<collision-mask lib='animated' name='img1 seq'>
-			<position>
-				<x>0</x>
-				<y>0</y>
-			</position>
-			<rotation>0</rotation>
-		</collision-mask>
 	</collision-geometry>
 	<spawn-points>
 		<spawn type="player spawn" id="0">

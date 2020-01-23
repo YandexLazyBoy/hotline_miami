@@ -1,6 +1,6 @@
 Type: sequence atlas
-Filename: sprPlayerBearWalkPipe.png
-Lib name: sprPlayerBearWalkPipe
+Filename: sprPlayerBearPipe.png
+Lib name: sprPlayerBearPipe
 Frame size: 28x24
 Frame time: 0.05
 Frame positions: 0x0, 28x0, 56x0, 84x0, 112x0, 140x0, 168x0, 196x0

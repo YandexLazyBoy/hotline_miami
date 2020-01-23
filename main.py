@@ -1,16 +1,21 @@
 from scripts.map import *
+import pygame
 
-sprite_lib = SpriteLibrarian()
-sprite_lib.load_library('data/sprites', pygame.quit())
-
-sound_lib = None
-#  sound_lib.load_library('data/sounds')
+pygame.init()
 
 size = width, height = 800, 600
 screen = pygame.display.set_mode(size)
 screen.fill(pygame.Color('black'))
 
-world = load_map('map_ex.xml', sprite_lib, sound_lib, size, '0.1.Lite', pygame.quit())
+pygame.display.flip()
+
+sprite_lib = SpriteLibrarian()
+sprite_lib.load_library('data/sprites', print)
+
+sound_lib = None
+#  sound_lib.load_library('data/sounds')
+
+world = load_map('maps/map.xml', sprite_lib, sound_lib, size, '0.1.Lite', print)
 mouse_pos = 0, 0
 
 fps = 60
@@ -42,8 +47,8 @@ while running:
 
     screen.fill(pygame.Color('black'))
     world.render()
-    screen.blit(world.render_canvas, (world.player.viewport_position[0] - world.player.position[0],
-                                      world.player.viewport_position[1] - world.player.position[1]))
+    screen.blit(world.render_canvas, (world.v_position[0] - world.player.rect.x,
+                                      world.v_position[1] - world.player.rect.y))
 
     pygame.display.flip()
     clock.tick(fps)

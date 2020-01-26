@@ -6,8 +6,8 @@
 	<static-geometry>
 		<prop lib='static' name='sprWoodWallInteriorH'>
 			<position>
-				<x>1</x>
-				<y>2</y>
+				<x>0</x>
+				<y>0</y>
 			</position>
 			<layer>0</layer>
 		</prop>
@@ -15,8 +15,8 @@
 	<collision-geometry>
 		<collision-rect>
 			<size>
-				<width>10</width>
-				<height>10</height>				
+				<width>128</width>
+				<height>32</height>
 			</size>
 			<position>
 				<x>0</x>
@@ -28,8 +28,8 @@
 	<spawn-points>
 		<spawn type="player spawn" id="0">
 			<position>
-				<x>0</x>
-				<y>0</y>
+				<x>400</x>
+				<y>400</y>
 			</position>
 			<rotation>0</rotation>
 		</spawn>

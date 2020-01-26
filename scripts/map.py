@@ -3,6 +3,7 @@ import os
 import xml.etree.ElementTree as ET
 from random import choice
 from pygame.transform import scale
+from pygame.mixer import Sound
 
 
 class SoundLibrarian:
@@ -18,9 +19,10 @@ class SoundLibrarian:
         errors = 0
         for root, dirs, files in os.walk(lib_path):
             for file in files:
-                if file.endswith('.wav') or file.endswith('.ogg'):
+                if file.endswith('.wav'):
                     try:
-                        sound = pygame.mixer.Sound(os.path.join(root, file))
+                        sound = Sound(os.path.join(root, file))
+                        print(sound)
                     except pygame.error:
                         sound = None
                     if sound:
@@ -74,7 +76,7 @@ class SpriteLibrarian:
                                             print(os.path.join(root, contents[-1]), 'can not be loaded')
                                             errors += 1
                                     else:
-                                        self.img_library[lib_name] = (image, )
+                                        self.img_library[lib_name] = image,
                                         success += 1
                                 else:
                                     print(os.path.join(root, contents[1]), 'can not be loaded')
@@ -124,7 +126,7 @@ class SpriteLibrarian:
                                 image = self.load_image(os.path.join(root, contents[1]), color_key=-1)
                                 if image:
                                     try:
-                                        frame_size = tuple(map(int, contents[3].split('x')))
+                                        frame_size = tuple(map(lambda x: int(x) * 4, contents[3].split('x')))
                                     except ValueError:
                                         frame_size = None
                                     if frame_size:
@@ -132,14 +134,15 @@ class SpriteLibrarian:
                                             frame_time = float(contents[4])
                                         except ValueError:
                                             frame_time = None
-                                        rects = [tuple(map(int, rect.split('x'))) for rect in contents[5].split(', ')]
+                                        rects = [tuple(map(lambda x: int(x) * 4, rect.split('x')))
+                                                 for rect in contents[5].split(', ')]
                                         if frame_time is not None:
                                             if rects:
                                                 image_seq = list()
 
                                                 for rect in rects:
-                                                    imag = pygame.Surface((frame_size[0] * 4, frame_size[1] * 4))
-                                                    imag.blit(image, (rect[0] * 4, rect[1] * 4))
+                                                    imag = pygame.Surface(frame_size, SRCALPHA)
+                                                    imag.blit(image, rect)
                                                     image_seq.append(imag)
                                                 if len(contents) > 6:
                                                     mask = self.load_image(os.path.join(root, contents[-1]))
@@ -180,17 +183,17 @@ class SpriteLibrarian:
                                 image = self.load_image(os.path.join(root, contents[1]), color_key=-1)
                                 if image:
                                     try:
-                                        frame_size = tuple(map(int, contents[3].split('x')))
+                                        frame_size = tuple(map(lambda x: int(x) * 4, contents[3].split('x')))
                                     except ValueError:
                                         frame_size = None
                                     if frame_size:
-                                        rects = [tuple(map(int, rect.split('x')))
+                                        rects = [tuple(map(lambda x: int(x) * 4, rect.split('x')))
                                                  for rect in contents[4].split(', ')]
                                         if rects:
                                             image_seq = list()
 
                                             for rect in rects:
-                                                imag = pygame.Surface(frame_size)
+                                                imag = pygame.Surface(frame_size, SRCALPHA)
                                                 imag.blit(image, rect)
                                                 image_seq.append(imag)
                                             if len(lib_name) == len(image_seq):
@@ -205,7 +208,7 @@ class SpriteLibrarian:
                                                         errors += 1
                                                 else:
                                                     for i in range(len(lib_name)):
-                                                        self.img_library[lib_name[i]] = (image_seq[i])
+                                                        self.img_library[lib_name[i]] = image_seq[i],
                                                     success += 1
                                             else:
                                                 print(os.path.join(root, file), 'has wrong number of lib name(s)')
@@ -261,7 +264,6 @@ class Map:
 
             if overlap:
                 overlap = maskcollide(self.player, geom)
-                overlap_rect = overlap.get_bounding_rects()[0]
 
                 overlist = [(self.player.rect.x + point[0], self.player.rect.y + point[1]) for point in
                             overlap.outline(PHYSICS_QUALITY)]
@@ -285,8 +287,11 @@ class Map:
                 # ----------------------------------------------------------------------------------------
 
                 cf = abs(zerodiv(self.player.center[0] - min_point[0], self.player.center[1] - min_point[1]))
-                max_point = min(overlist, key=lambda x: abs(cf - abs(zerodiv(self.player.center[0] - x[0],
-                                                                             self.player.center[1] - x[1]))))
+                if overlist:
+                    max_point = min(overlist, key=lambda x: abs(cf - abs(zerodiv(self.player.center[0] - x[0],
+                                                                                 self.player.center[1] - x[1]))))
+                else:
+                    max_point = min_point
                 if abs(max_point[0] - min_point[0]) > PHYSICS_QUALITY or abs(
                         max_point[1] - min_point[1]) > PHYSICS_QUALITY:
                     offsetx = min_point[0] - max_point[0]
@@ -301,17 +306,19 @@ class Map:
                         self.player.teleport((0, offsety - 1))
 
     def update(self, dt, mouse_pos):
+        self.player.rotation = degrees(atan2(abs(self.v_position[0] - mouse_pos[0]),
+                                             abs(self.v_position[1] - mouse_pos[1])))
         self.player.update(mouse_pos, dt)
         self.animated_geometry.update(dt)
         self.bullets.update(dt)
         self.checkCollision()
 
     def render(self):
-        self.render_canvas = self.orig_canvas.copy()
-        self.checkCollision()
+        render_canvas = self.orig_canvas.copy()
         self.bullets.draw(self.render_canvas)
         self.static_geometry.draw(self.render_canvas)
-        self.render_canvas.blit(self.player.image, self.player.center)
+        render_canvas.blit(self.player.image, self.player.o_rect)
+        return render_canvas
 
 
 def get_p_fxml(prop: ET.Element):

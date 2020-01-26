@@ -41,12 +41,13 @@ class PlayerBear:
         self.mask = from_surface(self.lib['mask'][0])
         self.shoot = print
         self.current_weapon = BearGuns(self.lib['bullet'][0], self.lib['arm'])
-        self.current_animation = AnimSeq([1], 0.05)
+        self.current_animation = AnimSeq([1], 0.01)  # дефолтная анимация TODO избавиться от костыля
         self.legs = self.lib['legs']
         self.image = rotate(self.legs.image, 90 - rotation)
         self.rotation = rotation
         self.center = spawn
-        self.rect = self.image.get_rect()
+        self.o_rect = self.image.get_rect()
+        self.rect = self.mask.get_bounding_rects()[0]
 
     def setup_shooting(self, shoot_func):
         self.shoot = shoot_func
@@ -66,7 +67,9 @@ class PlayerBear:
             return 1
 
     def update_rect(self):
-        self.rect = self.image.get_rect()
+        self.o_rect = self.image.get_rect()
+        self.o_rect.move_ip(self.center[0] - self.o_rect.width // 2, self.center[1] - self.o_rect.height // 2)
+        self.rect = self.mask.get_bounding_rects()[0]
         self.rect.move_ip(self.center[0] - self.rect.width // 2, self.center[1] - self.rect.height // 2)
 
     def load_data(self, sound, spritelib):
@@ -135,12 +138,14 @@ class PlayerBear:
 
     def update(self, mouse_pos, dt):
         if self.current_animation.loop_flag is False:
+            self.rotation = degrees(atan2(mouse_pos[1] - 300, mouse_pos[0] - 400))  # TODO адаптивность!
+            print(self.rotation)
             self.current_weapon.update(self.rotation, self.center, mouse_pos)
 
             r1 = self.current_weapon.image.get_rect()
             r2 = self.legs.image.get_rect()
             rect = r1.union(r2)
-            self.image = Surface((rect.width, rect.height))
+            self.image = Surface((rect.width, rect.height), SRCALPHA)
             self.image.blit(self.legs.image, ((rect.width - r2.width) // 2, (rect.height - r2.height) // 2))
             self.image.blit(self.current_weapon.image, ((rect.width - r1.width) // 2, (rect.height - r1.height) // 2))
         else:
@@ -149,7 +154,7 @@ class PlayerBear:
             r1 = self.current_animation.image.get_rect()
             r2 = self.legs.image.get_rect()
             rect = r1.union(r2)
-            self.image = Surface((rect.width, rect.height))
+            self.image = Surface((rect.width, rect.height), SRCALPHA)
             self.image.blit(self.legs.image, ((rect.width - r2.width) // 2, (rect.height - r2.height) // 2))
             self.image.blit(self.current_weapon.image, ((rect.width - r1.width) // 2, (rect.height - r1.height) // 2))
 

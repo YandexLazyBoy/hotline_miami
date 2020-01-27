@@ -140,8 +140,9 @@ class SpriteLibrarian:
                                             if rects:
                                                 image_seq = list()
 
-                                                for rect in rects:
+                                                for rec in rects:
                                                     imag = pygame.Surface(frame_size, SRCALPHA)
+                                                    rect = rec[0] * -1, rec[1] * -1
                                                     imag.blit(image, rect)
                                                     image_seq.append(imag)
                                                 if len(contents) > 6:
@@ -192,8 +193,9 @@ class SpriteLibrarian:
                                         if rects:
                                             image_seq = list()
 
-                                            for rect in rects:
+                                            for rec in rects:
                                                 imag = pygame.Surface(frame_size, SRCALPHA)
+                                                rect = rec[0] * -1, rec[1] * -1
                                                 imag.blit(image, rect)
                                                 image_seq.append(imag)
                                             if len(lib_name) == len(image_seq):
@@ -255,9 +257,9 @@ class Map:
     def checkCollision(self):
         for geom in self.collision_geometry:
             for bullet in self.bullets:
-                if (geom.rect.collidepoint(bullet.position) or 0 > bullet.position[0] or
-                    bullet.position[0] > self.map_size[0] or 0 > bullet.position[1] or
-                        bullet.position[1] > self.map_size[1]):
+                if (geom.rect.collidepoint(bullet.rect.x, bullet.rect.y) or 0 > bullet.rect[0] or
+                    bullet.rect[0] > self.map_size[0] or 0 > bullet.rect[1] or
+                        bullet.rect[1] > self.map_size[1]):
                     bullet.kill()
 
             overlap = pygame.sprite.collide_mask(self.player, geom)
@@ -311,11 +313,14 @@ class Map:
         self.player.update(mouse_pos, dt)
         self.animated_geometry.update(dt)
         self.bullets.update(dt)
+        # print(len(self.bullets.spritedict.keys()))
         self.checkCollision()
 
     def render(self):
         render_canvas = self.orig_canvas.copy()
-        self.bullets.draw(self.render_canvas)
+        # render_canvas = pygame.Surface(self.map_size)
+        render_canvas.set_colorkey((0, 0, 0))
+        self.bullets.draw(render_canvas)
         self.static_geometry.draw(self.render_canvas)
         render_canvas.blit(self.player.image, self.player.o_rect)
         return render_canvas

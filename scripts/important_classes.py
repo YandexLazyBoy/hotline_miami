@@ -6,7 +6,7 @@ class Group(pygame.sprite.AbstractGroup):
         sprites = self.sprites()
         surface_blit = surface.blit
         for spr in sprites:
-            self.spritedict[spr] = surface_blit(spr.transformed_texture, spr.position)
+            self.spritedict[spr] = surface_blit(spr.image, spr.rect)
         self.lostsprites = []
 
 

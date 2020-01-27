@@ -29,7 +29,7 @@ class AnimSeq:
 
         self.image = self.frames[self.current_frame]
         if self.rotation:
-            rotate(self.image, 360 - self.rotation)
+            self.image = rotate(self.image, 360 - self.rotation)
 
 
 class PlayerBear:
@@ -40,14 +40,24 @@ class PlayerBear:
             err_func()
         self.mask = from_surface(self.lib['mask'][0])
         self.shoot = print
-        self.current_weapon = BearGuns(self.lib['bullet'][0], self.lib['arm'])
+        self.current_weapon = BearGuns(self.lib['bullet'][0], self.lib['arm'], self.lib['detailsSpecial'])
         self.current_animation = AnimSeq([1], 0.01)  # дефолтная анимация TODO избавиться от костыля
+        self.current_animation.loop_flag = True
         self.legs = self.lib['legs']
         self.image = rotate(self.legs.image, 90 - rotation)
         self.rotation = rotation
         self.center = spawn
         self.o_rect = self.image.get_rect()
         self.rect = self.mask.get_bounding_rects()[0]
+        self.current_flag = 'Rifle'
+
+    def set_animation(self, name):
+        an = self.lib.get(name, None)
+        if an:
+            self.current_animation = an
+            self.current_animation.reset()
+        else:
+            print(name, 'animation cannot be loaded')
 
     def setup_shooting(self, shoot_func):
         self.shoot = shoot_func
@@ -73,8 +83,7 @@ class PlayerBear:
         self.rect.move_ip(self.center[0] - self.rect.width // 2, self.center[1] - self.rect.height // 2)
 
     def load_data(self, sound, spritelib):
-        print(spritelib.img_library)
-        err = self.load_sprite(spritelib.seq_library, 'sprBearWalkUnarmed', 'walkUnarmed', animdata=True)
+        err = self.load_sprite(spritelib.seq_library, 'sprPlayerBearWalkUnarmed', 'walkUnarmed', animdata=True)
         err += self.load_sprite(spritelib.seq_library, 'sprBearWalkUnarmedBack', 'walkUnarmedBack', animdata=True)
         err += self.load_sprite(spritelib.seq_library, 'sprBearWalkBat', 'walkBat', animdata=True)
         err += self.load_sprite(spritelib.seq_library, 'sprBearWalkChain', 'walkChain', animdata=True)
@@ -106,9 +115,9 @@ class PlayerBear:
         err += self.load_sprite(spritelib.seq_library, 'sprBearAttackShotgun', 'attackShotgun', animdata=True)
         err += self.load_sprite(spritelib.seq_library, 'sprBearAttackUzi', 'attackUzi', animdata=True)
         err += self.load_sprite(spritelib.seq_library, 'sprBearAttackSilencer', 'attackSilencer', animdata=True)
-        err += self.load_sprite(spritelib.seq_library, 'sprBearReloadWeapons', 'reloadWeapons', animdata=True)
+        err += self.load_sprite(spritelib.seq_library, 'sprPlayerBearReloadWeapons', 'reloadWeapons', animdata=True)
         err += self.load_sprite(spritelib.seq_library, 'sprBearHolsterWeapons', 'holsterWeapons', animdata=True)
-        err += self.load_sprite(spritelib.seq_library, 'sprBearTakeOutWeapons', 'takeOutWeapons', animdata=True)
+        err += self.load_sprite(spritelib.seq_library, 'sprPlayerBearTakeOutWeapons', 'takeOutWeapons', animdata=True)
         err += self.load_sprite(spritelib.seq_library, 'sprBearDeadMelee', 'deadMelee')
         err += self.load_sprite(spritelib.seq_library, 'sprBearDeadShot', 'deadShot')
         # err += self.load_sprite(spritelib.seq_library, 'sprBearKillChain', 'killChain', animdata=True)
@@ -119,28 +128,41 @@ class PlayerBear:
         err += self.load_sprite(spritelib.seq_library, 'sprPlayerBearLegs', 'legs', animdata=True)
         err += self.load_sprite(spritelib.img_library, 'sprBulletLSD', 'bullet')
         err += self.load_sprite(spritelib.img_library, 'sprPlayerBearCollisionMask', 'mask')
+        err += self.load_sprite(spritelib.seq_library, 'sprPlayerBearDetailsSpecial', 'detailsSpecial')
         return err
+
+    def holster_weapons(self):
+        self.current_animation = self.lib['holsterWeapons']
+        self.current_flag = 'holster'
 
     def teleport(self, pos):
         self.center = self.center[0] + pos[0], self.center[1] + pos[1]
 
+    def weapon_init(self):
+        self.current_weapon.shoot = self.shoot
+        self.current_weapon.launch_anim = self.set_animation
+        self.current_weapon.holster = self.holster_weapons
+
     def set_weapon(self, name):
         if name == 'BearGuns':
-            self.current_weapon = BearGuns(self.lib['bullet'][0], self.lib['arm'])
+            self.current_weapon = BearGuns(self.lib['bullet'][0], self.lib['arm'], self.lib['detailsSpecial'])
         else:
             print('Error: Unknown name of gun -', name)
-        self.current_weapon.shoot = self.shoot
+        self.weapon_init()
 
     def take_out_guns(self):
         self.current_animation = self.lib['takeOutWeapons']  # 0 - тело, 1 - вся фигура
-        self.current_weapon = BearGuns(self.lib['bullet'][0], self.lib['arm'])
-        self.current_weapon.shoot = self.shoot
+        self.current_weapon = BearGuns(self.lib['bullet'][0], self.lib['arm'], self.lib['detailsSpecial'])
+        self.weapon_init()
 
     def update(self, mouse_pos, dt):
-        if self.current_animation.loop_flag is False:
-            self.rotation = degrees(atan2(mouse_pos[1] - 300, mouse_pos[0] - 400))  # TODO адаптивность!
-            print(self.rotation)
-            self.current_weapon.update(self.rotation, self.center, mouse_pos)
+        self.rotation = degrees(atan2(mouse_pos[1] - 300, mouse_pos[0] - 400))  # TODO адаптивность!
+        if self.current_animation.loop_flag is True and self.current_flag != 'unarmed':
+            if self.current_flag == 'holster':
+                self.current_animation = self.lib['walkUnarmed']
+                self.current_flag = 'unarmed'
+                return None
+            self.current_weapon.update(self.rotation, self.center, mouse_pos, dt, self.current_animation.loop_flag)
 
             r1 = self.current_weapon.image.get_rect()
             r2 = self.legs.image.get_rect()
@@ -149,34 +171,39 @@ class PlayerBear:
             self.image.blit(self.legs.image, ((rect.width - r2.width) // 2, (rect.height - r2.height) // 2))
             self.image.blit(self.current_weapon.image, ((rect.width - r1.width) // 2, (rect.height - r1.height) // 2))
         else:
+            self.current_animation.rotation = self.rotation
             self.current_animation.update(dt)
-
             r1 = self.current_animation.image.get_rect()
             r2 = self.legs.image.get_rect()
             rect = r1.union(r2)
             self.image = Surface((rect.width, rect.height), SRCALPHA)
             self.image.blit(self.legs.image, ((rect.width - r2.width) // 2, (rect.height - r2.height) // 2))
-            self.image.blit(self.current_weapon.image, ((rect.width - r1.width) // 2, (rect.height - r1.height) // 2))
-
+            self.image.blit(self.current_animation.image, ((rect.width - r1.width) // 2, (rect.height - r1.height) // 2))
         self.update_rect()
 
     def move(self, vec, dt):
         self.center = self.center[0] + PLAYER_SPEED * vec[0] * dt, self.center[1] + PLAYER_SPEED * vec[1] * dt
-        if vec == (0, 1):
-            self.legs.rotation = 0
-        elif vec == (1, 1):
-            self.legs.rotation = 45
-        elif vec == (1, 0):
+        if self.current_flag == 'unarmed':
+            self.current_animation.update(dt)
+        if vec == [0, 0]:
+            self.legs.reset()
+            if self.current_flag == 'unarmed':
+                self.current_animation.reset()
+        elif vec == [0, 1]:
             self.legs.rotation = 90
-        elif vec == (-1, 1):
+        elif vec == [1, 1]:
+            self.legs.rotation = 45
+        elif vec == [1, 0]:
+            self.legs.rotation = 0
+        elif vec == [-1, 1]:
             self.legs.rotation = 135
-        elif vec == (-1, 0):
+        elif vec == [-1, 0]:
             self.legs.rotation = 180
-        elif vec == (-1, -1):
+        elif vec == [-1, -1]:
             self.legs.rotation = 225
-        elif vec == (0, -1):
+        elif vec == [0, -1]:
             self.legs.rotation = 270
-        elif vec == (1, -1):
+        elif vec == [1, -1]:
             self.legs.rotation = 315
         self.legs.update(dt)
 

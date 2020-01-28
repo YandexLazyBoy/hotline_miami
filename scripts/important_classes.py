@@ -79,7 +79,7 @@ class AnimObject(Object):
         if lim <= self.current_time:
             self.current_time -= lim
 
-            if self.frame_time <= self.current_time:  # TODO возможно, оно как-то оптимизируется
+            if self.frame_time <= self.current_time:
                 if self.direction:
                     self.current_frame += 1
                 else:

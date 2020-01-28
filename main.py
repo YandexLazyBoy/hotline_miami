@@ -1,6 +1,35 @@
 from scripts.map import *
 import pygame
 
+"""
+class Button:
+    def __init__(self, act):
+        self.
+        self.rect =
+        self.act = act
+
+    def collide(self, point):
+        if self.rect.collidepoint(point):
+
+
+
+class HUD:
+    def __init__(self, win_size):
+        self.lib = dict()
+        self.canvas = Surface(win_size, SRCALPHA)
+
+    def click(self, mpos):
+
+    def update(self):
+        pass
+
+    def load_data(self, lib):
+        sprite = lib.get('pts', None)[0]
+        if sprite:
+
+    def render(self):"""
+
+
 fps = 60
 frame_time = 0.016
 
@@ -28,7 +57,7 @@ cursor = AnimSeq(cur_spr[0], cur_spr[1])
 print(cursor.image)
 
 sound_lib = SoundLibrarian()
-# sound_lib.load_sound_library('data/sounds')
+sound_lib.load_sound_library('data/sounds')
 
 world = load_map('maps/map.xml', sprite_lib, sound_lib, size, '0.1.Lite', print)
 world.player.set_weapon('BearGuns')
@@ -40,6 +69,8 @@ running = True
 clock = pygame.time.Clock()
 
 while running:
+    s = clock.get_fps()
+    frame_time = frame_time if s == 0.0 else 1 / s
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
@@ -65,7 +96,8 @@ while running:
     world.player.move(vec, frame_time)
     world.update(frame_time, mouse_pos)
 
-    screen.fill(pygame.Color('black'))
+    screen.blit(world.background.image, (0, 0))
+    world.background.update(frame_time)
     screen.blit(world.render(), (world.v_position[0] - world.player.center[0],
                                  world.v_position[1] - world.player.center[1]))
     screen.blit(cursor.image, (mouse_pos[0] - 28, mouse_pos[1] - 28))

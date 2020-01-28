@@ -35,6 +35,7 @@ class AnimSeq:
 class PlayerBear:
     def __init__(self, sound_lib, sprite_lib, spawn, rotation, err_func):
         self.lib = dict()
+        self.s_lib = dict()
         if self.load_data(sound_lib, sprite_lib):
             print('Class "PlayerBear" could not load data')
             err_func()
@@ -76,13 +77,22 @@ class PlayerBear:
             print('Cannot load', source)
             return 1
 
+    def load_sound(self, lib, name):
+        snd = lib.get(name, None)
+        if snd:
+            self.s_lib[name] = snd
+            return 0
+        else:
+            print('Cannot load', name)
+            return 1
+
     def update_rect(self):
         self.o_rect = self.image.get_rect()
         self.o_rect.move_ip(self.center[0] - self.o_rect.width // 2, self.center[1] - self.o_rect.height // 2)
         self.rect = self.mask.get_bounding_rects()[0]
         self.rect.move_ip(self.center[0] - self.rect.width // 2, self.center[1] - self.rect.height // 2)
 
-    def load_data(self, sound, spritelib):
+    def load_data(self, soundlib, spritelib):
         err = self.load_sprite(spritelib.seq_library, 'sprPlayerBearWalkUnarmed', 'walkUnarmed', animdata=True)
         err += self.load_sprite(spritelib.seq_library, 'sprBearWalkUnarmedBack', 'walkUnarmedBack', animdata=True)
         err += self.load_sprite(spritelib.seq_library, 'sprBearWalkBat', 'walkBat', animdata=True)
@@ -129,6 +139,7 @@ class PlayerBear:
         err += self.load_sprite(spritelib.img_library, 'sprBulletLSD', 'bullet')
         err += self.load_sprite(spritelib.img_library, 'sprPlayerBearCollisionMask', 'mask')
         err += self.load_sprite(spritelib.seq_library, 'sprPlayerBearDetailsSpecial', 'detailsSpecial')
+        err += self.load_sound(soundlib.sound_library, 'sndUzi')
         return err
 
     def holster_weapons(self):
@@ -142,6 +153,7 @@ class PlayerBear:
         self.current_weapon.shoot = self.shoot
         self.current_weapon.launch_anim = self.set_animation
         self.current_weapon.holster = self.holster_weapons
+        self.current_weapon.load_sounds(self.s_lib)
 
     def set_weapon(self, name):
         if name == 'BearGuns':
@@ -178,7 +190,8 @@ class PlayerBear:
             rect = r1.union(r2)
             self.image = Surface((rect.width, rect.height), SRCALPHA)
             self.image.blit(self.legs.image, ((rect.width - r2.width) // 2, (rect.height - r2.height) // 2))
-            self.image.blit(self.current_animation.image, ((rect.width - r1.width) // 2, (rect.height - r1.height) // 2))
+            self.image.blit(self.current_animation.image, ((rect.width - r1.width) // 2,
+                                                           (rect.height - r1.height) // 2))
         self.update_rect()
 
     def move(self, vec, dt):
@@ -208,4 +221,4 @@ class PlayerBear:
         self.legs.update(dt)
 
 
-PlayersDB = [PlayerBear]
+PLAYERS_DB = [PlayerBear]

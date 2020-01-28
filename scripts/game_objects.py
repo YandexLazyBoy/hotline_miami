@@ -1,7 +1,4 @@
-from math import sqrt
 from scripts.important_classes import *
-from data.classes.players import *
-from scripts.collision import *
 
 
 class StaticSprite(pygame.sprite.Sprite):

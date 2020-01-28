@@ -1,13 +1,12 @@
 <map version='0.1.Lite' size='1000x1000'>
-	<background>
-		<image>keherbeker</image>
-		<music volume='50'>Sunset</music>
+	<background id='0'>
+		<music volume='20'>Sunset</music>
 	</background>
 	<static-geometry>
 		<prop lib='static' name='sprWoodWallInteriorH'>
 			<position>
-				<x>0</x>
-				<y>0</y>
+				<x>100</x>
+				<y>100</y>
 			</position>
 			<layer>0</layer>
 		</prop>
@@ -19,8 +18,8 @@
 				<height>32</height>
 			</size>
 			<position>
-				<x>0</x>
-				<y>0</y>
+				<x>100</x>
+				<y>100</y>
 			</position>
 			<rotation>0</rotation>
 		</collision-rect>

@@ -2,5 +2,5 @@ Type: sequence atlas
 Name: sprCursor.png
 Libname: sprCursor
 Frame size: 14x14
-Frame time: 0.1
+Frame time: 0.05
 Frame rects: 0x0, 14x0, 28x0, 42x0, 56x0, 70x0, 84x0, 98x0, 112x0, 126x0, 140x0, 154x0, 168x0

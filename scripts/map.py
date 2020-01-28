@@ -3,30 +3,39 @@ import os
 import xml.etree.ElementTree as ET
 from random import choice
 from pygame.transform import scale
-from pygame.mixer import Sound
+from pygame.mixer import Sound, music
+from math import sqrt
+from data.classes.backgrounds import *
+from scripts.collision import *
 
 
 class SoundLibrarian:
     def __init__(self):
         self.music_library = list()
-        self.sound_library = list()
+        self.sound_library = dict()
 
     def load_music(self, name):
-        pass
+        try:
+            music1 = music.load(os.path.join('data/music', name + '.mp3'))
+        except pygame.error:
+            music1 = None
+        if music:
+            self.sound_library[name] = music1
+        else:
+            print(name, 'can not be loaded')
 
     def load_sound_library(self, lib_path):
         success = 0
         errors = 0
         for root, dirs, files in os.walk(lib_path):
             for file in files:
-                if file.endswith('.wav'):
+                if file.endswith('.ogg'):
                     try:
                         sound = Sound(os.path.join(root, file))
-                        print(sound)
                     except pygame.error:
                         sound = None
                     if sound:
-                        self.sound_library.append(sound)
+                        self.sound_library[file[:-4]] = sound
                         success += 1
                     else:
                         print(os.path.join(root, file), 'can not be loaded')
@@ -240,11 +249,11 @@ class SpriteLibrarian:
 
 
 class Map:
-    def __init__(self, map_size, window_size, angeom, stgeom, colgeom, player):
+    def __init__(self, map_size, window_size, angeom, stgeom, colgeom, player, backgrpund):
         self.map_size = map_size
-        self.orig_canvas = pygame.Surface(self.map_size)
+        self.orig_canvas = pygame.Surface(self.map_size, SRCALPHA)
         self.orig_canvas.fill((50, 50, 50))
-        self.render_canvas = self.orig_canvas
+        self.background = backgrpund
         self.bullets = Group()
         self.camera_size = window_size
         self.animated_geometry = angeom
@@ -253,6 +262,7 @@ class Map:
         self.v_position = (window_size[0] // 2, window_size[1] // 2)
         self.player = player
         self.player.setup_shooting(self.bullets.add)
+        music.play()
 
     def checkCollision(self):
         for geom in self.collision_geometry:
@@ -306,6 +316,7 @@ class Map:
                         self.player.teleport((0, offsety + 1))
                     else:
                         self.player.teleport((0, offsety - 1))
+                    self.player.legs.reset()
 
     def update(self, dt, mouse_pos):
         self.player.rotation = degrees(atan2(abs(self.v_position[0] - mouse_pos[0]),
@@ -319,11 +330,11 @@ class Map:
     def render(self):
         render_canvas = self.orig_canvas.copy()
         # render_canvas = pygame.Surface(self.map_size)
-        render_canvas.set_colorkey((0, 0, 0))
         self.bullets.draw(render_canvas)
-        self.static_geometry.draw(self.render_canvas)
+        self.static_geometry.draw(render_canvas)
         render_canvas.blit(self.player.image, self.player.o_rect)
-        return render_canvas
+        r = sin(atan2(self.map_size[1] // 2 - self.player.center[1], self.map_size[0] // 2 - self.player.center[0]))
+        return rotate(render_canvas, r)
 
 
 def get_p_fxml(prop: ET.Element):
@@ -339,8 +350,14 @@ def load_map(name, sprite_lib, sound_lib, win_size, version, err_func):
     static_geometry = pygame.sprite.LayeredUpdates()
     animated_geometry = pygame.sprite.LayeredUpdates()
     collision_geometry = list()
+    background = None
     gg = list()
     if version == root.attrib['version']:
+        for ex in root.find('background'):
+            if ex.tag == 'music':
+                sound_lib.load_music(ex.text)
+                pygame.mixer.music.set_volume(float(ex.attrib['volume']) / 100)
+            background = BACKGROUND_DB[int(root.findall('background')[0].attrib['id'])](sprite_lib, win_size)
         for prop in root.find('static-geometry'):
             img_package = sprite_lib.img_library.get(prop.attrib['name'], None)
             if img_package:
@@ -372,7 +389,7 @@ def load_map(name, sprite_lib, sound_lib, win_size, version, err_func):
             pos = get_p_fxml(spawn)
             rot = int(spawn.find('rotation').text)
             if spawn.attrib['type'] == 'player spawn':
-                gg.append(PlayersDB[int(spawn.attrib['id'])](sound_lib, sprite_lib, pos, rot, err_func))
+                gg.append(PLAYERS_DB[int(spawn.attrib['id'])](sound_lib, sprite_lib, pos, rot, err_func))
             elif spawn.attrib['type'] == 'enemy spawn':
                 print('Oops...')
                 # TODO срочно классы бандитов мне накидали!
@@ -380,7 +397,7 @@ def load_map(name, sprite_lib, sound_lib, win_size, version, err_func):
                 print(spawn.attrib['type'], 'is not a type of spawn points')
         gg = choice(gg)
         return Map(list(size), win_size, animated_geometry, static_geometry,
-                   collision_geometry, gg)
+                   collision_geometry, gg, background)
     else:
         print('Selected map is not compatible with the current version of program')
         return None

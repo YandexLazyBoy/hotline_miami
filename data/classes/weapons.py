@@ -2,7 +2,7 @@ from pygame.sprite import Sprite
 from pygame import Surface, SRCALPHA
 from pygame.transform import rotate, flip
 from pygame.draw import circle
-from math import radians, sin, cos, atan2, degrees
+from math import radians, sin, cos, atan2, degrees, tan
 from data.classes.constants import *
 from random import randint
 
@@ -43,6 +43,10 @@ class BearGuns:
         self.is_reload = False
         self.reload_time = 2.25
         self.is__anim = False
+        self.s_lib = dict()
+
+    def load_sounds(self, lib):
+        self.s_lib['shoot'] = lib['sndUzi']
 
     def update(self, angle, player_pos, mouse_pos, dt, is_anim):
         self.current_time += dt
@@ -110,6 +114,7 @@ class BearGuns:
                         self.current_time = 0
                     else:
                         self.magazine -= 2
+                        self.s_lib['shoot'].play()
                         self.shoot(Bullet(self.bullet_texture, self.pos_left,
                                           self.rotation_left + randint(self.dispersion * -1, self.dispersion)))
                         self.shoot(Bullet(self.bullet_texture, self.pos_right,

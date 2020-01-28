@@ -1,0 +1,6 @@
+Type: sequence atlas
+Name: sprPlayerBearWalkUnarmed.png
+Libname: sprPlayerBearWalkUnarmed
+Frame size: 18x24
+Frame time: 0.2
+Frame rects: 0x0, 18x0, 36x0, 54x0, 72x0, 90x0, 108x0, 126x0, 408x0

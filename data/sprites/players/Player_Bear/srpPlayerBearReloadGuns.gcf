@@ -1,0 +1,6 @@
+Type: sequence atlas
+Name: srpPlayerBearReloadGuns.png
+Libname: sprPlayerBearReloadWeapons
+Frame size: 51x32
+Frame time: 0.15
+Frame rects: 0x0, 51x0, 102x0, 153x0, 204x0, 255x0, 306x0, 357x0, 408x0, 459x0, 510x0, 561x0, 612x0, 663x0, 714x0, 765x0

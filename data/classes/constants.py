@@ -1,4 +1,4 @@
 PLAYER_SPEED = 400  # скорость игрока (пиксели в секунду)
 BULLET_SPEED = 1200  # скорость пуль (пиксели в секунду) больше 1200 не ставить - пули пролетают скозь стены на 30< fps
 PHYSICS_QUALITY = 1  # максимальное качество
-BACKGROUND_RENDER_TYPE = 0
+BACKGROUND_RENDER_TYPE = 2

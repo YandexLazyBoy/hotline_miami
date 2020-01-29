@@ -1,5 +1,4 @@
 from scripts.map import *
-import pygame
 
 """
 class Button:

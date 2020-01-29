@@ -1,4 +1,4 @@
-import pygame
+from data.classes.players import *
 
 
 class Group(pygame.sprite.AbstractGroup):

@@ -1,21 +1,17 @@
-from pygame.sprite import Sprite
-from pygame import Surface, SRCALPHA
-from pygame.transform import rotate, flip
-from pygame.draw import circle
-from math import radians, sin, cos, atan2, degrees, tan
-from data.classes.constants import *
-from random import randint
+from data.classes.backgrounds import *
+import math
+from random import randint, choice
 
 
-class Bullet(Sprite):
+class Bullet(pygame.sprite.Sprite):
     def __init__(self, textures, spawn, rotation):
         super().__init__()
         rotation -= 90
-        self.image = rotate(textures, 360 - rotation)
+        self.image = pygame.transform.rotate(textures, 360 - rotation)
         self.rect = textures.get_rect()
         self.rect.move_ip(spawn[0] - self.rect.width // 2, spawn[1] - self.rect.height // 2)
-        self.dx = cos(radians(rotation)) * BULLET_SPEED  # скорость по х
-        self.dy = sin(radians(rotation)) * BULLET_SPEED  # скорость по y
+        self.dx = math.cos(math.radians(rotation)) * BULLET_SPEED  # скорость по х
+        self.dy = math.sin(math.radians(rotation)) * BULLET_SPEED  # скорость по y
 
     def update(self, seconds):
         self.rect = self.rect.move(self.dx * seconds, self.dy * seconds)
@@ -33,7 +29,7 @@ class BearGuns:
         self.rotation_left = 0
         self.pos_left = 0, 0
         self.pos_right = 0, 0
-        self.image = Surface((336, 164))
+        self.image = pygame.Surface((336, 164))
         self.sklad = 10
         self.current_time = 0
         self.shoot_time = 0.1
@@ -50,41 +46,42 @@ class BearGuns:
 
     def update(self, angle, player_pos, mouse_pos, dt, is_anim):
         self.current_time += dt
-        # angle = 90
         mouse_pos = mouse_pos[0] - 400 + player_pos[0], mouse_pos[1] - 300 + player_pos[1]
 
-        vpp1 = sin(radians(angle)) * 36, cos(radians(angle)) * -36
+        vpp1 = math.sin(math.radians(angle)) * 36, math.cos(math.radians(angle)) * -36
 
         pp2 = player_pos[0] - vpp1[0], player_pos[1] - vpp1[1]
         pp1 = player_pos[0] + vpp1[0], player_pos[1] + vpp1[1]
 
-        ang1 = degrees(atan2(pp1[1] - mouse_pos[1], pp1[0] - mouse_pos[0])) - 90
-        ang2 = degrees(atan2(pp2[1] - mouse_pos[1], pp2[0] - mouse_pos[0])) - 90
+        ang1 = math.degrees(math.atan2(pp1[1] - mouse_pos[1], pp1[0] - mouse_pos[0])) - 90
+        ang2 = math.degrees(math.atan2(pp2[1] - mouse_pos[1], pp2[0] - mouse_pos[0])) - 90
 
         self.rotation_left = ang1 + 1.5375
         self.rotation_right = ang2 - 1.5375
 
-        self.pos_left = (int(pp1[0] + sin(radians(self.rotation_left)) * 120.0666),
-                         int(pp1[1] + cos(radians(self.rotation_left)) * -120.0666))
-        self.pos_right = (int(pp2[0] + sin(radians(self.rotation_right)) * 120.0666),
-                          int(pp2[1] + cos(radians(self.rotation_right)) * -120.0666))
+        self.pos_left = (int(pp1[0] + math.sin(math.radians(self.rotation_left)) * 120.0666),
+                         int(pp1[1] + math.cos(math.radians(self.rotation_left)) * -120.0666))
+        self.pos_right = (int(pp2[0] + math.sin(math.radians(self.rotation_right)) * 120.0666),
+                          int(pp2[1] + math.cos(math.radians(self.rotation_right)) * -120.0666))
 
         pp1 = (vpp1[0] + 168, vpp1[1] + 168)
         pp2 = (168 - vpp1[0], 168 - vpp1[1])
 
-        rt1 = rotate(flip(self.arm_textures, True, True), 270 - ang1)
-        rt2 = rotate(flip(self.arm_textures, True, False), 270 - ang2)
+        rt1 = pygame.transform.rotate(pygame.transform.flip(self.arm_textures, True, True), 270 - ang1)
+        rt2 = pygame.transform.rotate(pygame.transform.flip(self.arm_textures, True, False), 270 - ang2)
 
-        self.image = Surface((336, 336), SRCALPHA)
+        self.image = pygame.Surface((336, 336), pygame.SRCALPHA)
         self.is__anim = is_anim
 
-        ps1 = int(56.5685 * cos(radians(ang1 + 81.8699))), int(56.5685 * sin(radians(ang1 + 81.8699)))
-        ps2 = int(56.5685 * cos(radians(ang2 + 98.1301))), int(56.5685 * sin(radians(ang2 + 98.1301)))
+        ps1 = (int(56.5685 * math.cos(math.radians(ang1 + 81.8699))),
+               int(56.5685 * math.sin(math.radians(ang1 + 81.8699))))
+        ps2 = (int(56.5685 * math.cos(math.radians(ang2 + 98.1301))),
+               int(56.5685 * math.sin(math.radians(ang2 + 98.1301))))
 
         det = list()
 
-        det.append(rotate(self.det[0], 360 - angle))
-        det.append(rotate(self.det[1], 360 - angle))
+        det.append(pygame.transform.rotate(self.det[0], 360 - angle))
+        det.append(pygame.transform.rotate(self.det[1], 360 - angle))
 
         self.image.blit(det[0], (168 - det[0].get_width() // 2, 168 - det[0].get_height() // 2))
         self.image.blit(rt1, (pp1[0] - rt1.get_width() // 2 - ps1[0], pp1[1] - rt1.get_height() // 2 - ps1[1]))

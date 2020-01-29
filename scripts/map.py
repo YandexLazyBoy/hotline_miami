@@ -1,28 +1,12 @@
-from scripts.game_objects import *
 import os
 import xml.etree.ElementTree as ET
-from random import choice
-from pygame.transform import scale
-from pygame.mixer import Sound, music
-from math import sqrt
-from data.classes.backgrounds import *
+from scripts.game_objects import *
 from scripts.collision import *
 
 
 class SoundLibrarian:
     def __init__(self):
-        self.music_library = list()
         self.sound_library = dict()
-
-    def load_music(self, name):
-        try:
-            music1 = music.load(os.path.join('data/music', name + '.mp3'))
-        except pygame.error:
-            music1 = None
-        if music:
-            self.sound_library[name] = music1
-        else:
-            print(name, 'can not be loaded')
 
     def load_sound_library(self, lib_path):
         success = 0
@@ -31,7 +15,7 @@ class SoundLibrarian:
             for file in files:
                 if file.endswith('.ogg'):
                     try:
-                        sound = Sound(os.path.join(root, file))
+                        sound = pygame.mixer.Sound(os.path.join(root, file))
                     except pygame.error:
                         sound = None
                     if sound:
@@ -59,7 +43,7 @@ class SpriteLibrarian:
             image.set_colorkey(color_key)
         else:
             image = image.convert_alpha()
-        return scale(image, (image.get_width() * 4, image.get_height() * 4))
+        return pygame.transform.scale(image, (image.get_width() * 4, image.get_height() * 4))
 
     def load_library(self, lib_path, err_func):
         success = 0
@@ -79,7 +63,7 @@ class SpriteLibrarian:
                                         mask = self.load_image(os.path.join(root,
                                                                             contents[-1]))
                                         if mask:
-                                            self.img_library[lib_name] = image,  mask
+                                            self.img_library[lib_name] = image, mask
                                             success += 1
                                         else:
                                             print(os.path.join(root, contents[-1]), 'can not be loaded')
@@ -150,7 +134,7 @@ class SpriteLibrarian:
                                                 image_seq = list()
 
                                                 for rec in rects:
-                                                    imag = pygame.Surface(frame_size, SRCALPHA)
+                                                    imag = pygame.Surface(frame_size, pygame.SRCALPHA)
                                                     rect = rec[0] * -1, rec[1] * -1
                                                     imag.blit(image, rect)
                                                     image_seq.append(imag)
@@ -203,7 +187,7 @@ class SpriteLibrarian:
                                             image_seq = list()
 
                                             for rec in rects:
-                                                imag = pygame.Surface(frame_size, SRCALPHA)
+                                                imag = pygame.Surface(frame_size, pygame.SRCALPHA)
                                                 rect = rec[0] * -1, rec[1] * -1
                                                 imag.blit(image, rect)
                                                 image_seq.append(imag)
@@ -243,15 +227,16 @@ class SpriteLibrarian:
         if errors:
             err_func()
 
+
 # памятка разрабу:
 # елемент seq_library состоит из ([картинки], время кадра, иногда маска коллизии)
 # img_library выглядит проще - (картинка, +- маска)
 
 
 class Map:
-    def __init__(self, map_size, window_size, angeom, stgeom, colgeom, player, backgrpund):
+    def __init__(self, map_size, window_size, angeom, stgeom, colgeom, player, backgrpund, has_music):
         self.map_size = map_size
-        self.orig_canvas = pygame.Surface(self.map_size, SRCALPHA)
+        self.orig_canvas = pygame.Surface(self.map_size, pygame.SRCALPHA)
         self.orig_canvas.fill((50, 50, 50))
         self.background = backgrpund
         self.bullets = Group()
@@ -262,13 +247,14 @@ class Map:
         self.v_position = (window_size[0] // 2, window_size[1] // 2)
         self.player = player
         self.player.setup_shooting(self.bullets.add)
-        music.play()
+        if has_music:
+            pygame.mixer.music.play()
 
     def checkCollision(self):
         for geom in self.collision_geometry:
             for bullet in self.bullets:
                 if (geom.rect.colliderect(bullet.rect) or 0 > bullet.rect[0] or
-                    bullet.rect[0] > self.map_size[0] or 0 > bullet.rect[1] or
+                        bullet.rect[0] > self.map_size[0] or 0 > bullet.rect[1] or
                         bullet.rect[1] > self.map_size[1]):
                     bullet.kill()
 
@@ -280,8 +266,8 @@ class Map:
                 overlist = [(self.player.rect.x + point[0], self.player.rect.y + point[1]) for point in
                             overlap.outline(PHYSICS_QUALITY)]
                 min_point = min(overlist,
-                                key=lambda x: sqrt((x[0] - self.player.center[0]) ** 2 +
-                                                   (x[1] - self.player.center[1]) ** 2))
+                                key=lambda x: math.sqrt((x[0] - self.player.center[0]) ** 2 +
+                                                        (x[1] - self.player.center[1]) ** 2))
                 indexes = list()
 
                 # ---------------------This can be deleted to speed up collision-------------------------
@@ -319,8 +305,8 @@ class Map:
                     self.player.legs.reset()
 
     def update(self, dt, mouse_pos):
-        self.player.rotation = degrees(atan2(abs(self.v_position[0] - mouse_pos[0]),
-                                             abs(self.v_position[1] - mouse_pos[1])))
+        self.player.rotation = math.degrees(math.atan2(abs(self.v_position[0] - mouse_pos[0]),
+                                            abs(self.v_position[1] - mouse_pos[1])))
         self.player.update(mouse_pos, dt)
         self.animated_geometry.update(dt)
         self.bullets.update(dt)
@@ -333,8 +319,8 @@ class Map:
         self.bullets.draw(render_canvas)
         self.static_geometry.draw(render_canvas)
         render_canvas.blit(self.player.image, self.player.o_rect)
-        r = sin(atan2(self.map_size[1] // 2 - self.player.center[1], self.map_size[0] // 2 - self.player.center[0]))
-        return rotate(render_canvas, r)
+        r = math.sin(math.atan2(self.map_size[1] // 2 - self.player.center[1], self.map_size[0] // 2 - self.player.center[0]))
+        return pygame.transform.rotate(render_canvas, r)
 
 
 def get_p_fxml(prop: ET.Element):
@@ -352,13 +338,15 @@ def load_map(name, sprite_lib, sound_lib, win_size, version, err_func):
     animated_geometry = pygame.sprite.LayeredUpdates()
     collision_geometry = list()
     background = None
+    has_music = False
     gg = list()
     if version == root.attrib['version']:
         for ex in root.find('background'):
             if ex.tag == 'music':
                 sound_lib.load_music(ex.text)
                 pygame.mixer.music.set_volume(float(ex.attrib['volume']) / 100)
-            background = BACKGROUND_DB[int(root.findall('background')[0].attrib['id'])](sprite_lib, win_size)
+                has_music = True
+        background = BACKGROUND_DB[int(root.findall('background')[0].attrib['id'])](sprite_lib, win_size)
         for prop in root.find('static-geometry'):
             img_package = sprite_lib.img_library.get(prop.attrib['name'], None)
             if img_package:
@@ -398,7 +386,7 @@ def load_map(name, sprite_lib, sound_lib, win_size, version, err_func):
                 print(spawn.attrib['type'], 'is not a type of spawn points')
         gg = choice(gg)
         return Map(list(size), win_size, animated_geometry, static_geometry,
-                   collision_geometry, gg, background)
+                   collision_geometry, gg, background, has_music)
     else:
         print('Selected map is not compatible with the current version of program')
         return None

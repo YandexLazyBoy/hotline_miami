@@ -267,7 +267,7 @@ class Map:
     def checkCollision(self):
         for geom in self.collision_geometry:
             for bullet in self.bullets:
-                if (geom.rect.collidepoint(bullet.rect.x, bullet.rect.y) or 0 > bullet.rect[0] or
+                if (geom.rect.colliderect(bullet.rect) or 0 > bullet.rect[0] or
                     bullet.rect[0] > self.map_size[0] or 0 > bullet.rect[1] or
                         bullet.rect[1] > self.map_size[1]):
                     bullet.kill()
@@ -346,7 +346,8 @@ def get_p_fxml(prop: ET.Element):
 def load_map(name, sprite_lib, sound_lib, win_size, version, err_func):
     tree = ET.parse(os.path.join('data', name))
     root = tree.getroot()
-    size = map(int, root.attrib['size'].split('x'))
+    size = list(map(int, root.attrib['size'].split('x')))
+    print(size)
     static_geometry = pygame.sprite.LayeredUpdates()
     animated_geometry = pygame.sprite.LayeredUpdates()
     collision_geometry = list()

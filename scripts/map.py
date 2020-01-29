@@ -2,6 +2,7 @@ import os
 import xml.etree.ElementTree as ET
 from scripts.game_objects import *
 from scripts.collision import *
+from copy import copy
 
 
 class SoundLibrarian:
@@ -237,16 +238,28 @@ class Map:
     def __init__(self, map_size, window_size, angeom, stgeom, colgeom, player, backgrpund, has_music):
         self.map_size = map_size
         self.orig_canvas = pygame.Surface(self.map_size, pygame.SRCALPHA)
-        self.orig_canvas.fill((50, 50, 50))
+        self.orig_canvas.fill((0, 0, 0))
         self.background = backgrpund
         self.bullets = Group()
         self.camera_size = window_size
         self.animated_geometry = angeom
         self.static_geometry = stgeom
         self.collision_geometry = colgeom
+        if DEBUG_LEVEL in (2, 3):
+            for msk in colgeom:
+                pygame.draw.polygon(self.orig_canvas, (255, 255, 255),
+                                    [(msk.rect.x + point[0], msk.rect.y + point[1]) for point in msk.mask.outline()])
+        elif DEBUG_LEVEL == 4:
+            for spr in angeom:
+                pygame.draw.rect(self.orig_canvas, DEBUG_BOUNDING_BOX_COLOR, spr.rect, 1)
+            for spr in stgeom:
+                pygame.draw.rect(self.orig_canvas, DEBUG_BOUNDING_BOX_COLOR, spr.rect, 1)
+        else:
+            self.static_geometry.draw(self.orig_canvas)
         self.v_position = (window_size[0] // 2, window_size[1] // 2)
         self.player = player
         self.player.setup_shooting(self.bullets.add)
+        self.overlap_img = StaticSprite(pygame.Surface((1, 1), pygame.SRCALPHA), (0, 0), 0)
         if has_music:
             pygame.mixer.music.play()
 
@@ -259,12 +272,12 @@ class Map:
                     bullet.kill()
 
             overlap = pygame.sprite.collide_mask(self.player, geom)
-
             if overlap:
                 overlap = maskcollide(self.player, geom)
-
                 overlist = [(self.player.rect.x + point[0], self.player.rect.y + point[1]) for point in
                             overlap.outline(PHYSICS_QUALITY)]
+                if DEBUG_LEVEL == 3:
+                    overlap = copy(overlist)
                 min_point = min(overlist,
                                 key=lambda x: math.sqrt((x[0] - self.player.center[0]) ** 2 +
                                                         (x[1] - self.player.center[1]) ** 2))
@@ -290,6 +303,8 @@ class Map:
                                                                                  self.player.center[1] - x[1]))))
                 else:
                     max_point = min_point
+                if DEBUG_LEVEL == 3:
+                    return overlap, min_point, max_point
                 if abs(max_point[0] - min_point[0]) > PHYSICS_QUALITY or abs(
                         max_point[1] - min_point[1]) > PHYSICS_QUALITY:
                     offsetx = min_point[0] - max_point[0]
@@ -303,6 +318,9 @@ class Map:
                     else:
                         self.player.teleport((0, offsety - 1))
                     self.player.legs.reset()
+                    return []
+            else:
+                return []
 
     def update(self, dt, mouse_pos):
         self.player.rotation = math.degrees(math.atan2(abs(self.v_position[0] - mouse_pos[0]),
@@ -310,16 +328,21 @@ class Map:
         self.player.update(mouse_pos, dt)
         self.animated_geometry.update(dt)
         self.bullets.update(dt)
-        # print(len(self.bullets.spritedict.keys()))
-        self.checkCollision()
 
     def render(self):
         render_canvas = self.orig_canvas.copy()
         # render_canvas = pygame.Surface(self.map_size)
         self.bullets.draw(render_canvas)
-        self.static_geometry.draw(render_canvas)
+        overlap = self.checkCollision()
+        self.animated_geometry.draw(render_canvas)
         render_canvas.blit(self.player.image, self.player.o_rect)
-        r = math.sin(math.atan2(self.map_size[1] // 2 - self.player.center[1], self.map_size[0] // 2 - self.player.center[0]))
+        r = math.sin(math.atan2(self.map_size[1] // 2 - self.player.center[1],
+                                self.map_size[0] // 2 - self.player.center[0]))
+        if overlap:
+            if len(overlap[0]) > 2:
+                pygame.draw.polygon(render_canvas, (255, 120, 120), overlap[0], 0)
+                pygame.draw.line(render_canvas, (120, 130, 130), overlap[1], overlap[2], 2)
+
         return pygame.transform.rotate(render_canvas, r)
 
 
@@ -337,7 +360,6 @@ def load_map(name, sprite_lib, sound_lib, win_size, version, err_func):
     static_geometry = pygame.sprite.LayeredUpdates()
     animated_geometry = pygame.sprite.LayeredUpdates()
     collision_geometry = list()
-    background = None
     has_music = False
     gg = list()
     if version == root.attrib['version']:
@@ -365,8 +387,7 @@ def load_map(name, sprite_lib, sound_lib, win_size, version, err_func):
             if geom.tag == 'collision-rect':
                 rect_size = geom.find('size')
                 rect_size = int(rect_size.find('width').text), int(rect_size.find('height').text)
-                mask = pygame.mask.Mask(rect_size)
-                mask.fill()
+                mask = pygame.mask.Mask(rect_size, fill=True)
                 collision_geometry.append(ColGeom(mask, get_p_fxml(geom)))
             elif geom.tag == 'collision-mask':
                 if geom.attrib['lib'] == 'static':

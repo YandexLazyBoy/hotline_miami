@@ -12,9 +12,6 @@ class Group(pygame.sprite.AbstractGroup):
 
 class LayeredGroup(pygame.sprite.LayeredUpdates):
     def draw(self, surface):
-        """draw all sprites in the right order onto the passed surface
-        LayeredUpdates.draw(surface): return Rect_list
-        """
         spritedict = self.spritedict
         surface_blit = surface.blit
         dirty = self.lostsprites

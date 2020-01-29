@@ -2,5 +2,5 @@ Type: sequence atlas
 Filename: sprSpread.png
 Libname: sprSpread
 Frame size: 97x97
-Frame time: 0.2
+Frame time: 0.5
 Frame positions: 97x0, 97x97, 194x0, 194x97, 291x0, 291x97, 388x0, 388x97, 485x0, 485x97, 582x0, 582x97, 679x0, 679x97, 776x0, 776x97, 873x0, 873x97, 970x0, 970x97, 1067x0, 1067x97, 1164x0, 1164x97, 1261x0, 1358x0

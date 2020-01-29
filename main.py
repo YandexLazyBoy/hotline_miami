@@ -38,12 +38,16 @@ size = width, height = 800, 600
 screen = pygame.display.set_mode(size)
 screen.fill(pygame.Color('black'))
 
+pygame.display.set_caption('Hotline Miami')
+
 pygame.display.flip()
 
 pygame.mouse.set_visible(False)
 
 sprite_lib = SpriteLibrarian()
 sprite_lib.load_library('data/sprites', print)
+
+pygame.display.set_icon(sprite_lib.img_library['TitleIcon32'][0])
 
 cur_spr = sprite_lib.seq_library.get('sprCursor', None)
 if not cur_spr:
@@ -70,6 +74,7 @@ clock = pygame.time.Clock()
 while running:
     s = clock.get_fps()
     frame_time = frame_time if s == 0.0 else 1 / s
+    print(s)
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False

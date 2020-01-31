@@ -4,12 +4,12 @@ from random import randint, choice
 
 
 class Bullet(pygame.sprite.Sprite):
-    def __init__(self, textures, spawn, rotation):
+    def __init__(self, textures, spawn, rotation, dl):
         super().__init__()
         rotation -= 90
-        if DEBUG_LEVEL in (0, 1):
+        if dl in (0, 1):
             self.image = pygame.transform.rotate(textures, 360 - rotation)
-        elif DEBUG_LEVEL in (2, 3):
+        elif dl in (2, 3):
             textures.fill((255, 255, 255))
             self.image = pygame.transform.rotate(textures, 360 - rotation)
         else:
@@ -47,13 +47,15 @@ class BearGuns:
         self.reload_time = 2.25
         self.is_anim = False
         self.s_lib = dict()
+        self.dl = 0
 
     def load_sounds(self, lib):
         self.s_lib['shoot'] = lib['sndUzi']
 
-    def update(self, angle, player_pos, mouse_pos, dt, is_anim):
+    def update(self, angle, player_pos, mouse_pos, dt, is_anim, v_pos, devl, dbc):
+        self.dl = devl
         self.current_time += dt
-        mouse_pos = mouse_pos[0] - 400 + player_pos[0], mouse_pos[1] - 300 + player_pos[1]
+        mouse_pos = mouse_pos[0] - v_pos[0] + player_pos[0], mouse_pos[1] - v_pos[1] + player_pos[1]
 
         vpp1 = math.sin(math.radians(angle)) * 36, math.cos(math.radians(angle)) * -36
 
@@ -89,26 +91,26 @@ class BearGuns:
 
         det.append(pygame.transform.rotate(self.det[0], 360 - angle))
         det.append(pygame.transform.rotate(self.det[1], 360 - angle))
-        if DEBUG_LEVEL in (0, 1):
+        if devl in (0, 1):
             self.image.blit(det[0], (168 - det[0].get_width() // 2, 168 - det[0].get_height() // 2))
             self.image.blit(rt1, (pp1[0] - rt1.get_width() // 2 - ps1[0], pp1[1] - rt1.get_height() // 2 - ps1[1]))
             self.image.blit(rt2, (pp2[0] - rt2.get_width() // 2 - ps2[0], pp2[1] - rt2.get_height() // 2 - ps2[1]))
             self.image.blit(det[1], (168 - det[1].get_width() // 2, 168 - det[1].get_height() // 2))
-        elif DEBUG_LEVEL in (2, 3):
+        elif devl in (2, 3):
             self.image = pygame.Surface((1, 1), pygame.SRCALPHA)
         else:
             b_r = det[0].get_rect()
             b_r.move_ip((168 - b_r.w // 2, 168 - b_r.h // 2))
-            pygame.draw.rect(self.image, DEBUG_BOUNDING_BOX_COLOR, b_r, 1)
+            pygame.draw.rect(self.image, dbc, b_r, 1)
             b_r = rt1.get_rect()
             b_r.move_ip((pp1[0] - b_r.w // 2 - ps1[0], pp1[1] - b_r.h // 2 - ps1[1]))
-            pygame.draw.rect(self.image, DEBUG_BOUNDING_BOX_COLOR, b_r, 1)
+            pygame.draw.rect(self.image, dbc, b_r, 1)
             b_r = rt2.get_rect()
             b_r.move_ip((pp1[0] - b_r.w // 2 - ps1[0], pp1[1] - b_r.h // 2 - ps1[1]))
-            pygame.draw.rect(self.image, DEBUG_BOUNDING_BOX_COLOR, b_r, 1)
+            pygame.draw.rect(self.image, dbc, b_r, 1)
             b_r = det[1].get_rect()
             b_r.move_ip((168 - b_r.w // 2, 168 - b_r.h // 2))
-            pygame.draw.rect(self.image, DEBUG_BOUNDING_BOX_COLOR, b_r, 1)
+            pygame.draw.rect(self.image, dbc, b_r, 1)
 
     def shootb(self, dt):
         if self.is_anim:
@@ -136,9 +138,10 @@ class BearGuns:
                         self.magazine -= 2
                         self.s_lib['shoot'].play()
                         self.shoot(Bullet(self.bullet_texture, self.pos_left,
-                                          self.rotation_left + randint(self.dispersion * -1, self.dispersion)))
+                                          self.rotation_left + randint(self.dispersion * -1, self.dispersion), self.dl))
                         self.shoot(Bullet(self.bullet_texture, self.pos_right,
-                                          self.rotation_right + randint(self.dispersion * -1, self.dispersion)))
+                                          self.rotation_right + randint(self.dispersion * -1, self.dispersion),
+                                   self.dl))
                 else:
                     print('There is nothing in magazine')
                     self.holster()

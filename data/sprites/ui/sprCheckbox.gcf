@@ -1,0 +1,5 @@
+Type: image atlas
+Filename: sprCheckbox.png
+Libnames: sprCheckboxUnChecked, sprCheckboxChecked
+Frame size: 13x13
+Frame rects: 0x0, 13x0

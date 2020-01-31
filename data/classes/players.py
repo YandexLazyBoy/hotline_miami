@@ -41,7 +41,7 @@ class PlayerBear:
         self.mask = pygame.mask.from_surface(self.lib['mask'][0])
         self.shoot = print
         self.current_weapon = BearGuns(self.lib['bullet'][0], self.lib['arm'], self.lib['detailsSpecial'])
-        self.current_animation = AnimSeq([1], 0.01)  # дефолтная анимация TODO избавиться от костыля
+        self.current_animation = AnimSeq([1], 0.01)
         self.current_animation.loop_flag = True
         self.legs = self.lib['legs']
         self.image = pygame.transform.rotate(self.legs.image, 90 - rotation)
@@ -166,32 +166,32 @@ class PlayerBear:
         self.current_weapon = BearGuns(self.lib['bullet'][0], self.lib['arm'], self.lib['detailsSpecial'])
         self.weapon_init()
 
-    def update(self, mouse_pos, dt):
-        self.rotation = math.degrees(math.atan2(mouse_pos[1] - 300, mouse_pos[0] - 400))  # TODO адаптивность!
+    def update(self, mouse_pos, dt, v_pos, devl, dbc):
         if self.current_animation.loop_flag is True and self.current_flag != 'unarmed':
             if self.current_flag == 'holster':
                 self.current_animation = self.lib['walkUnarmed']
                 self.current_flag = 'unarmed'
                 return None
-            self.current_weapon.update(self.rotation, self.center, mouse_pos, dt, self.current_animation.loop_flag)
+            self.current_weapon.update(self.rotation, self.center, mouse_pos, dt,
+                                       self.current_animation.loop_flag, v_pos, devl, dbc)
 
             r1 = self.current_weapon.image.get_rect()
             r2 = self.legs.image.get_rect()
             rect = r1.union(r2)
             self.image = pygame.Surface((rect.width, rect.height), pygame.SRCALPHA)
 
-            if DEBUG_LEVEL in (0, 1):
+            if devl in (0, 1):
                 self.image.blit(self.legs.image, ((rect.width - r2.width) // 2, (rect.height - r2.height) // 2))
                 self.image.blit(self.current_weapon.image,
                                 ((rect.width - r1.width) // 2, (rect.height - r1.height) // 2))
-            elif DEBUG_LEVEL in (2, 3):
+            elif devl in (2, 3):
                 self.image = self.lib['mask'][0]
             else:
                 self.image.blit(self.current_weapon.image,
                                 ((rect.width - r1.width) // 2, (rect.height - r1.height) // 2))
 
                 r2.move_ip((rect.w - r2.w) // 2, (rect.h - r2.h) // 2)
-                pygame.draw.rect(self.image, DEBUG_BOUNDING_BOX_COLOR, r2, 1)
+                pygame.draw.rect(self.image, dbc, r2, 1)
         else:
             self.current_animation.rotation = self.rotation
             self.current_animation.update(dt)
@@ -199,17 +199,17 @@ class PlayerBear:
             r2 = self.legs.image.get_rect()
             rect = r1.union(r2)
             self.image = pygame.Surface((rect.width, rect.height), pygame.SRCALPHA)
-            if DEBUG_LEVEL in (0, 1):
+            if devl in (0, 1):
                 self.image.blit(self.legs.image, ((rect.width - r2.width) // 2, (rect.height - r2.height) // 2))
                 self.image.blit(self.current_animation.image, ((rect.width - r1.width) // 2,
                                                                (rect.height - r1.height) // 2))
-            elif DEBUG_LEVEL in (2, 3):
+            elif devl in (2, 3):
                 self.image = self.lib['mask'][0]
             else:
                 r1.move_ip((rect.w - r1.w) // 2, (rect.h - r1.h) // 2)
-                pygame.draw.rect(self.image, DEBUG_BOUNDING_BOX_COLOR, r1, 1)
+                pygame.draw.rect(self.image, dbc, r1, 1)
                 r2.move_ip((rect.w - r2.w) // 2, (rect.h - r2.h) // 2)
-                pygame.draw.rect(self.image, DEBUG_BOUNDING_BOX_COLOR, r2, 1)
+                pygame.draw.rect(self.image, dbc, r2, 1)
         self.update_rect()
 
     def move(self, vec, dt):

@@ -23,6 +23,6 @@ def maskcollide(left, right):
 
 def zerodiv(v1, v2, clear=False):
     if clear:
-        return v1 // v2 if v1 and v2 else 0
+        return v1 // v2 if v2 else 0
     else:
-        return v1 / v2 if v1 and v2 else 0
+        return v1 / v2 if v2 else 0

@@ -11,16 +11,17 @@ class StaticSprite(pygame.sprite.Sprite):
 
 
 class AnimatedSprite(pygame.sprite.Sprite):
-    def __init__(self, img_seq, position, frame_time, layer):
+    def __init__(self, img_seq, position, frame_time, layer, rotation=0):
         super().__init__()
-        self.image = img_seq[0]
-        self.position = position
+        self.image = pygame.transform.rotate(img_seq[0], 360 - rotation)
         self.frames = img_seq
         self._layer = layer
         self.frame_time = frame_time
         self.current_time = 0
         self.current_frame = 0
         self.rect = self.image.get_rect()
+        self.rect.move_ip(position)
+        self.rotation = rotation
 
     def update(self, dt):
         self.current_time += dt
@@ -30,6 +31,8 @@ class AnimatedSprite(pygame.sprite.Sprite):
                 self.current_frame = 0
             self.image = self.frames[self.current_frame]
             self.current_time -= self.frame_time
+            if self.rotation:
+                self.image = pygame.transform.rotate(self.image, 360 - self.rotation)
 
 '''
 class Bullet(Object):

@@ -159,7 +159,7 @@ while running:
 
         world.player.move(vec, s)
         world.update(s, mouse_pos, size, set_manager.DL, set_manager.DBBC)
-        world.render()
+        world.render(set_manager.DL)
 
         screen.blit(world.background.image, (0, 0))
         world.background.update(s, set_manager.BGRT)
@@ -169,8 +169,9 @@ while running:
         hud.update(0, world.player, size)
         screen.blit(hud.image, (0, 0))
     if set_manager.DL == 1:
-        fps_screen = Font('fntRestart.fnt').get_surface('Current fps: ' + str(round(clock.get_fps(), 2)), alpha=False)
+        fps_screen = Font('fntRestart.fnt').get_surface('Current fps:   ' + str(round(clock.get_fps(), 2)), alpha=False)
         screen.blit(fps_screen, ((size[0] - fps_screen.get_width()) // 2, 0))
+    print(world.player.rect[0], world.player.rect[1])
     pygame.display.flip()
     clock.tick(fps)
 

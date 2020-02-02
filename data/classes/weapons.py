@@ -10,8 +10,8 @@ class Bullet(pygame.sprite.Sprite):
         if dl in (0, 1):
             self.image = pygame.transform.rotate(textures, 360 - rotation)
         elif dl in (2, 3):
-            textures.fill((255, 255, 255))
-            self.image = pygame.transform.rotate(textures, 360 - rotation)
+            tex = copy(textures)
+            self.image = pygame.transform.rotate(tex, 360 - rotation)
         else:
             self.image = pygame.Surface(pygame.transform.rotate(textures, 360 - rotation).get_size(), pygame.SRCALPHA)
             pygame.draw.rect(self.image, DEBUG_BOUNDING_BOX_COLOR, self.image.get_rect(), 1)

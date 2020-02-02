@@ -1,24 +1,331 @@
-<map version='0.1.Lite' size='1000x1000'>
+<map version='0.1.Lite' size='2000x1000'>
 	<background id='0'>
+		<music volume='0'>Sunset</music>
 	</background>
 	<static-geometry>
-		<prop lib='static' name='sprWoodWallInteriorH'>
+		<prop lib='static' name='sprBrownGarageFloor' tiled='8x10'>
 			<position>
-				<x>100</x>
-				<y>100</y>
+				<x>0</x>
+				<y>256</y>
 			</position>
 			<layer>0</layer>
 		</prop>
+		<prop lib='static' name='sprDarkPinkBrickFloor' tiled='6x4'>
+			<position>
+				<x>480</x>
+				<y>640</y>
+			</position>
+			<layer>0</layer>
+		</prop>
+		<prop lib='static' name='sprDarkPinkBrickFloor' tiled='14x14'>
+			<position>
+				<x>864</x>
+				<y>0</y>
+			</position>
+			<layer>0</layer>
+		</prop>
+		<prop lib='animated' name='sprElisFansInCouch' rotation='90'>
+			<position>
+				<x>1490</x>
+				<y>32</y>
+			</position>
+			<layer>0</layer>
+		</prop>
+		<prop lib='static' name='sprRedTiles' tiled='5x10'>
+			<position>
+				<x>512</x>
+				<y>0</y>
+			</position>
+			<layer>0</layer>
+		</prop>
+		<prop lib='static' name='sprBrickWallV' tiled='1x5'>
+			<position>
+				<x>0</x>
+				<y>224</y>
+			</position>
+			<layer>1</layer>
+		</prop>
+		<prop lib='static' name='sprBrickWallV' tiled='1x7'>
+			<position>
+				<x>1728</x>
+				<y>0</y>
+			</position>
+			<layer>1</layer>
+		</prop>
+		<prop lib='static' name='sprElisFansComputerTablev0'>
+			<position>
+				<x>514</x>
+				<y>750</y>
+			</position>
+			<layer>1</layer>
+		</prop>
+		<prop lib='static' name='sprElisBarFansv0'>
+			<position>
+				<x>880</x>
+				<y>32</y>
+			</position>
+			<layer>1</layer>
+		</prop>
+		<prop lib='static' name='sprBrickWallH' tiled='4x1'>
+			<position>
+				<x>0</x>
+				<y>224</y>
+			</position>
+			<layer>1</layer>
+		</prop>
+		<prop lib='static' name='sprBrickWallH' tiled='10x1'>
+			<position>
+				<x>480</x>
+				<y>864</y>
+			</position>
+			<layer>1</layer>
+		</prop>
+		<prop lib='static' name='sprBrickWallV' tiled='1x2'>
+			<position>
+				<x>480</x>
+				<y>0</y>
+			</position>
+			<layer>1</layer>
+		</prop>
+		<prop lib='static' name='sprWallV' tiled='1x3'>
+			<position>
+				<x>480</x>
+				<y>254</y>
+			</position>
+			<layer>1</layer>
+		</prop>
+		<prop lib='static' name='sprWallV' tiled='1x5'>
+			<position>
+				<x>832</x>
+				<y>0</y>
+			</position>
+			<layer>1</layer>
+		</prop>
+		<prop lib='static' name='sprWallV'>
+			<position>
+				<x>480</x>
+				<y>768</y>
+			</position>
+			<layer>1</layer>
+		</prop>
+		<prop lib='static' name='sprWallH'>
+			<position>
+				<x>480</x>
+				<y>608</y>
+			</position>
+			<layer>1</layer>
+		</prop>
+		<prop lib='static' name='sprBrickWallH' tiled='10x1'>
+			<position>
+				<x>480</x>
+				<y>0</y>
+			</position>
+			<layer>1</layer>
+		</prop>
+		<prop lib='static' name='sprWallH'>
+			<position>
+				<x>736</x>
+				<y>608</y>
+			</position>
+			<layer>1</layer>
+		</prop>
+		<prop lib='static' name='sprWallCorner'>
+			<position>
+				<x>832</x>
+				<y>608</y>
+			</position>
+			<layer>2</layer>
+		</prop>
+		<prop lib='static' name='sprWallCorner'>
+			<position>
+				<x>480</x>
+				<y>608</y>
+			</position>
+			<layer>2</layer>
+		</prop>
+		<prop lib='static' name='sprWallCorner'>
+			<position>
+				<x>480</x>
+				<y>768</y>
+			</position>
+			<layer>2</layer>
+		</prop>
+		<prop lib='static' name='sprBrickWallCorner'>
+			<position>
+				<x>480</x>
+				<y>864</y>
+			</position>
+			<layer>2</layer>
+		</prop>
+		<prop lib='static' name='sprBrickWallCorner'>
+			<position>
+				<x>1728</x>
+				<y>864</y>
+			</position>
+			<layer>2</layer>
+		</prop>
+		<prop lib='static' name='sprBrickWallCorner'>
+			<position>
+				<x>1728</x>
+				<y>0</y>
+			</position>
+			<layer>2</layer>
+		</prop>
+		<prop lib='static' name='sprBrickWallCorner'>
+			<position>
+				<x>832</x>
+				<y>0</y>
+			</position>
+			<layer>2</layer>
+		</prop>
+		<prop lib='static' name='sprBrickWallCorner'>
+			<position>
+				<x>480</x>
+				<y>0</y>
+			</position>
+			<layer>2</layer>
+		</prop>
+		<prop lib='static' name='sprBrickWallCorner'>
+			<position>
+				<x>480</x>
+				<y>224</y>
+			</position>
+			<layer>2</layer>
+		</prop>
+		<prop lib='static' name='sprBrickWallCorner'>
+			<position>
+				<x>0</x>
+				<y>224</y>
+			</position>
+			<layer>2</layer>
+		</prop>
 	</static-geometry>
 	<collision-geometry>
+		<collision-rect>
+			<size>
+				<width>1200</width>
+				<height>32</height>
+			</size>
+			<position>
+				<x>480</x>
+				<y>0</y>
+			</position>
+			<rotation>0</rotation>
+		</collision-rect>
+		<collision-rect>
+			<size>
+				<width>1300</width>
+				<height>32</height>
+			</size>
+			<position>
+				<x>480</x>
+				<y>870</y>
+			</position>
+			<rotation>0</rotation>
+		</collision-rect>
+		<collision-rect>
+			<size>
+				<width>160</width>
+				<height>500</height>
+			</size>
+			<position>
+				<x>1600</x>
+				<y>0</y>
+			</position>
+			<rotation>0</rotation>
+		</collision-rect>
+		<collision-rect>
+			<size>
+				<width>32</width>
+				<height>400</height>
+			</size>
+			<position>
+				<x>1720</x>
+				<y>500</y>
+			</position>
+			<rotation>0</rotation>
+		</collision-rect>
+		<collision-mask lib='animated' name='sprElisFansInCouch'>
+			<position>
+				<x>900</x>
+				<y>50</y>
+			</position>
+			<rotation>0</rotation>
+		</collision-mask>
+		<collision-rect>
+			<size>
+				<width>500</width>
+				<height>150</height>
+			</size>
+			<position>
+				<x>480</x>
+				<y>750</y>
+			</position>
+			<rotation>0</rotation>
+		</collision-rect>
+		<collision-rect>
+			<size>
+				<width>32</width>
+				<height>600</height>
+			</size>
+			<position>
+				<x>480</x>
+				<y>0</y>
+			</position>
+			<rotation>0</rotation>
+		</collision-rect>
 		<collision-rect>
 			<size>
 				<width>128</width>
 				<height>32</height>
 			</size>
 			<position>
-				<x>100</x>
-				<y>100</y>
+				<x>480</x>
+				<y>600</y>
+			</position>
+			<rotation>0</rotation>
+		</collision-rect>
+		<collision-rect>
+			<size>
+				<width>128</width>
+				<height>32</height>
+			</size>
+			<position>
+				<x>736</x>
+				<y>600</y>
+			</position>
+			<rotation>0</rotation>
+		</collision-rect>
+		<collision-rect>
+			<size>
+				<width>32</width>
+				<height>600</height>
+			</size>
+			<position>
+				<x>830</x>
+				<y>0</y>
+			</position>
+			<rotation>0</rotation>
+		</collision-rect>
+		<collision-rect>
+			<size>
+				<width>32</width>
+				<height>700</height>
+			</size>
+			<position>
+				<x>0</x>
+				<y>200</y>
+			</position>
+			<rotation>0</rotation>
+		</collision-rect>
+		<collision-rect>
+			<size>
+				<width>500</width>
+				<height>32</height>
+			</size>
+			<position>
+				<x>0</x>
+				<y>220</y>
 			</position>
 			<rotation>0</rotation>
 		</collision-rect>
@@ -26,8 +333,8 @@
 	<spawn-points>
 		<spawn type="player spawn" id="0">
 			<position>
-				<x>400</x>
-				<y>400</y>
+				<x>1400</x>
+				<y>250</y>
 			</position>
 			<rotation>0</rotation>
 		</spawn>

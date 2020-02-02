@@ -1,5 +1,5 @@
 import pygame
-from copy import copy
+from copy import copy, deepcopy
 from data.classes.constants import *
 
 

@@ -9,6 +9,12 @@ class SoundLibrarian:
     def __init__(self):
         self.sound_library = dict()
 
+    def load_music(self, name):
+        try:
+            pygame.mixer.music.load(os.path.join('data/music', name + '.mp3'))
+        except pygame.error:
+            print(name, 'can not be loaded')
+
     def load_sound_library(self, lib_path):
         success = 0
         errors = 0
@@ -238,7 +244,6 @@ class Map:
     def __init__(self, map_size, window_size, angeom, stgeom, colgeom, player, backgrpund, has_music, devl):
         self.map_size = map_size
         self.orig_canvas = pygame.Surface(self.map_size, pygame.SRCALPHA)
-        self.orig_canvas.fill((0, 0, 0))
         self.background = backgrpund
         self.bullets = Group()
         self.camera_size = window_size
@@ -321,25 +326,21 @@ class Map:
                     else:
                         self.player.teleport((0, offsety - 1))
                     self.player.legs.reset()
-                    return []
-            else:
-                return []
 
     def update(self, dt, mouse_pos, w_s, devl, dbc):
         self.dbc = dbc
         if self.DL != devl:
             self.DL = devl
             self.orig_canvas = pygame.Surface(self.map_size, pygame.SRCALPHA)
-            self.orig_canvas.fill((0, 0, 0))
             if self.DL in (2, 3):
                 for msk in self.collision_geometry:
                     pygame.draw.polygon(self.orig_canvas, (255, 255, 255),
                                         [(msk.rect.x + point[0], msk.rect.y + point[1]) for point in
                                          msk.mask.outline()])
             elif self.DL == 4:
-                for spr in self.animated_geometry:
-                    pygame.draw.rect(self.orig_canvas, dbc, spr.rect, 1)
                 for spr in self.static_geometry:
+                    pygame.draw.rect(self.orig_canvas, dbc, spr.rect, 1)
+                for spr in self.animated_geometry:
                     pygame.draw.rect(self.orig_canvas, dbc, spr.rect, 1)
             else:
                 self.static_geometry.draw(self.orig_canvas)
@@ -353,11 +354,12 @@ class Map:
         self.animated_geometry.update(dt)
         self.bullets.update(dt)
 
-    def render(self):
+    def render(self, rm):
         self.image = self.orig_canvas.copy()
         self.bullets.draw(self.image)
+        if rm in (0, 1):
+            self.animated_geometry.draw(self.image)
         overlap = self.checkCollision()
-        self.animated_geometry.draw(self.image)
         self.image.blit(self.player.image, self.player.o_rect)
         r = math.degrees(math.atan2(abs(self.map_size[1] // 2 - self.player.center[1]),
                                     abs(self.map_size[0] // 2 - self.player.center[0])))
@@ -398,13 +400,30 @@ def load_map(name, sprite_lib, sound_lib, win_size, version, err_func, devl, brt
         background = BACKGROUND_DB[int(root.findall('background')[0].attrib['id'])](sprite_lib, win_size, brt)
         for prop in root.find('static-geometry'):
             img_package = sprite_lib.img_library.get(prop.attrib['name'], None)
-            if img_package:
+            seq_package = sprite_lib.seq_library.get(prop.attrib['name'], None)
+            if img_package or seq_package:
                 if prop.attrib['lib'] == 'static':
                     layer = prop.find('layer').text
-                    static_geometry.add(StaticSprite(img_package[0], get_p_fxml(prop), int(layer)))
+                    pos = get_p_fxml(prop)
+                    tiled = prop.attrib.get('tiled', None)
+                    if tiled:
+                        tiled = list(map(int, tiled.split('x')))
+                        for y in range(tiled[1]):
+                            for x in range(tiled[0]):
+                                static_geometry.add(StaticSprite(img_package[0], (pos[0] +
+                                                                                  img_package[0].get_width() * x,
+                                                                                  pos[1] +
+                                                                                  img_package[0].get_height() * y),
+                                                                 int(layer)))
+                    else:
+                        static_geometry.add(StaticSprite(img_package[0], pos, int(layer)))
                 elif prop.attrib['lib'] == 'animated':
                     layer = prop.find('layer').text
-                    animated_geometry.add(AnimatedSprite(img_package[0], get_p_fxml(prop), img_package[1], int(layer)))
+                    rot = prop.attrib.get('rotation', None)
+                    if rot:
+                        rot = int(rot)
+                        animated_geometry.add(AnimatedSprite(seq_package[0], get_p_fxml(prop), seq_package[1],
+                                                             int(layer), rot))
                 else:
                     print(prop.attrib['lib'], 'is not a library')
             else:
@@ -414,22 +433,33 @@ def load_map(name, sprite_lib, sound_lib, win_size, version, err_func, devl, brt
             if geom.tag == 'collision-rect':
                 rect_size = geom.find('size')
                 rect_size = int(rect_size.find('width').text), int(rect_size.find('height').text)
-                mask = pygame.mask.Mask(rect_size, fill=True)
-                collision_geometry.append(ColGeom(mask, get_p_fxml(geom)))
+                tiled = geom.attrib.get('tiled', None)
+                pos = get_p_fxml(geom)
+                if tiled:
+                    tiled = list(map(int, tiled.split('x')))
+                    for y in range(tiled[1]):
+                        for x in range(tiled[0]):
+                            collision_geometry.append(ColGeom(pygame.mask.Mask(rect_size, fill=True), (pos[0] +
+                                                                                                       rect_size[0] * x,
+                                                                                                       pos[1] +
+                                                                                                       rect_size[1] * y)
+                                                              ))
+                else:
+                    collision_geometry.append(ColGeom(pygame.mask.Mask(rect_size, fill=True), pos))
             elif geom.tag == 'collision-mask':
                 if geom.attrib['lib'] == 'static':
-                    collision_geometry.append(pygame.mask.from_surface(sprite_lib.img_library[geom.attrib['name']][-1]))
+                    collision_geometry.append(ColGeom(
+                        pygame.mask.from_surface(sprite_lib.img_library[geom.attrib['name']][-1]), get_p_fxml(geom)))
                 elif geom.attrib['lib'] == 'animated':
-                    collision_geometry.append(pygame.mask.from_surface(sprite_lib.seq_library[geom.attrib['name']][-1]))
-
+                    collision_geometry.append(ColGeom(
+                        pygame.mask.from_surface(sprite_lib.seq_library[geom.attrib['name']][-1]), get_p_fxml(geom)))
         for spawn in root.find('spawn-points'):
             pos = get_p_fxml(spawn)
             rot = int(spawn.find('rotation').text)
             if spawn.attrib['type'] == 'player spawn':
                 gg.append(PLAYERS_DB[int(spawn.attrib['id'])](sound_lib, sprite_lib, pos, rot, err_func))
             elif spawn.attrib['type'] == 'enemy spawn':
-                print('Oops...')
-                # TODO срочно классы бандитов мне накидали!
+                pass
             else:
                 print(spawn.attrib['type'], 'is not a type of spawn points')
         gg = choice(gg)

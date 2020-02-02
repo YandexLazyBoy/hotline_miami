@@ -171,7 +171,6 @@ while running:
     if set_manager.DL == 1:
         fps_screen = Font('fntRestart.fnt').get_surface('Current fps:   ' + str(round(clock.get_fps(), 2)), alpha=False)
         screen.blit(fps_screen, ((size[0] - fps_screen.get_width()) // 2, 0))
-    print(world.player.rect[0], world.player.rect[1])
     pygame.display.flip()
     clock.tick(fps)
 

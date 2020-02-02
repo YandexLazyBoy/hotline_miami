@@ -44,7 +44,7 @@ class BearGuns:
         self.launch_anim = print
         self.holster = print
         self.is_reload = False
-        self.reload_time = 2.25
+        self.reload_time = 0
         self.is_anim = False
         self.s_lib = dict()
         self.dl = 0

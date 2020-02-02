@@ -1,6 +1,6 @@
 <map version='0.1.Lite' size='2000x1000'>
 	<background id='0'>
-		<music volume='0'>Sunset</music>
+		<music volume='50'>Gomd</music>
 	</background>
 	<static-geometry>
 		<prop lib='static' name='sprBrownGarageFloor' tiled='8x10'>

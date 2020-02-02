@@ -1,0 +1,5 @@
+Type: image atlas
+Filename: Backgrounds.png
+Libnames: sprWallCorner, sprBrickWallCorner
+Frame size: 8x8
+Frame rects: 306x322, 314x322

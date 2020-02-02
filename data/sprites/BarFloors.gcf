@@ -1,0 +1,6 @@
+Type: image atlas
+Filename: Backgrounds.png
+Libnames: sprDarkPinkBrickFloor, sprBrokenDarkPinkBrickFloor, sprRedTiles, sprBrownCarpet, sprBigDarkGreyTiles, sprPaper2, sprBrownGarageFloor
+Frame size: 16x16
+Frame rects: 96x450, 96x482, 643x113, 176x434, 273x370, 289x147, 289x450
+

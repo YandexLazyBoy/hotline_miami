@@ -1,0 +1,7 @@
+Type: sequence atlas
+Filename: sprElisFansInCouch.png
+Libname: sprElisFansInCouch
+Frame size: 121x61
+Frame time: 0.2
+Frame rects: 0x0, 121x0, 242x0, 363x0, 484x0, 605x0, 726x0, 847x0, 968x0, 1089x0, 1210x0, 0x61, 121x61, 242x61, 363x61, 484x61, 605x61, 726x61, 847x61, 968x61, 1089x61, 1210x61, 0x122, 121x122, 242x122, 363x122, 484x122, 605x122, 726x122, 847x122, 968x122, 0x183, 121x183, 242x183, 363x183, 484x183, 605x183, 726x183, 847x183, 968x183
+Collision mask: sprElisFansInCouchMask.png
